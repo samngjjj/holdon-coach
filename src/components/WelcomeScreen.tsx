@@ -34,6 +34,7 @@ export default function WelcomeScreen() {
     userProfile,
     startWorkout,
     selectPlan,
+    setActiveTab,
     setShowProfileModal,
     setShowHistoryModal,
     showPlanEditorModal,
@@ -86,6 +87,15 @@ export default function WelcomeScreen() {
             <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
               <span>🎯 目標：推滿 12 下自動升重 • 肩膀痛即刻煞車</span>
             </p>
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                onClick={() => setActiveTab('plans')}
+                className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold border border-white/20 transition-all flex items-center gap-1"
+              >
+                <span>更換計畫</span>
+                <ChevronRight className="w-3 h-3 text-[#00D09C]" />
+              </button>
+            </div>
           </div>
 
           {/* Quick Start Circle Floating Button */}

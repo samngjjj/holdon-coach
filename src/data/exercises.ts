@@ -155,14 +155,277 @@ export const HARD_LIMIT_KG = 30; // Max weight for hypertrophy safety zone
 export interface WorkoutPlanPreset {
   id: string;
   name: string;
-  category: 'PPL' | 'UpperLower' | 'BroSplit';
+  shortTitle?: string;
+  tagline?: string;
+  category: 'SpecialFocus' | 'PPL' | 'UpperLower' | 'BroSplit';
   categoryLabel: string;
   description: string;
   targetFocus: string;
+  equipment?: string;
+  duration?: string;
+  level?: string;
+  caloriesBurn?: number;
   exercises: ExerciseCard[];
 }
 
 export const WORKOUT_PLANS: WorkoutPlanPreset[] = [
+  // 0. 30日焦點專項 — 腹部減脂 (Waist & Fat Loss)
+  {
+    id: 'fat_loss_belly',
+    name: '30日焦點 — 腹部減脂',
+    shortTitle: '腹部減脂',
+    tagline: '在家進行 • 撫平小腹 • 緊實腰線',
+    category: 'SpecialFocus',
+    categoryLabel: '30日專項焦點',
+    description: '無需器材！針對頑固腹部脂肪的高效燃脂與深層核心喚醒課表，結合交替抬腿與側腹轉體。',
+    targetFocus: '腹直肌 / 腹橫肌 / 側腹線條',
+    equipment: '無需器材',
+    duration: '18 分鐘',
+    level: '新手友善',
+    caloriesBurn: 280,
+    exercises: [
+      {
+        exercise_id: 'lying_leg_raise',
+        exercise_name: '仰臥交替抬腿',
+        exercise_index: 0,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/scissors-kick.gif',
+          alt_text: '仰臥交替抬腿示範',
+          cue: '左右交替交疊抬腿，下背全程緊貼地面，鍛鍊下腹線條',
+        },
+        grip_type: '徒手平躺',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 16, rule: '推滿 16 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'oblique_crunch',
+        exercise_name: '斜腹轉體',
+        exercise_index: 1,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/bicycle-crunch.gif',
+          alt_text: '斜腹轉體示範',
+          cue: '手肘找對側膝蓋，側腹深度收縮擠壓',
+        },
+        grip_type: '雙手輕觸耳側',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 16, rule: '推滿 16 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'plank_core',
+        exercise_name: '平板支撐核心強化',
+        exercise_index: 2,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/plank.gif',
+          alt_text: '平板支撐示範',
+          cue: '手肘撐地骨盆後傾，腹肌臀部同時夾緊 45 秒',
+        },
+        grip_type: '手肘撐地',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 0, reps: 45, rule: '撐滿 45 秒即完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'quadruped_donkey_kick',
+        exercise_name: '跪姿屈膝提膝抬腿',
+        exercise_index: 3,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/donkey-kick.gif',
+          alt_text: '跪姿屈膝抬腿示範',
+          cue: '四足跪姿，單腿屈膝向後向上蹬起，刺激臀腹鏈',
+        },
+        grip_type: '雙手手掌撐地',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 0, reps: 15, rule: '推滿 15 下完成' },
+        safety_status: 'NORMAL',
+      },
+    ],
+  },
+
+  // 0.2 30日焦點專項 — 六塊腹肌 (Six Pack Abs)
+  {
+    id: 'six_pack_abs',
+    name: '30日焦點 — 六塊腹肌',
+    shortTitle: '六塊腹肌',
+    tagline: '在家進行 • 核心撕裂 • 稜角分明',
+    category: 'SpecialFocus',
+    categoryLabel: '30日專項焦點',
+    description: '高張力核心撕裂，專攻上腹捲曲與下腹抬腿，雕刻清晰分明的六塊腹肌稜角。',
+    targetFocus: '腹直肌上中下段 / 腹內外斜肌',
+    equipment: '無需器材',
+    duration: '20 分鐘',
+    level: '中階進階',
+    caloriesBurn: 310,
+    exercises: [
+      {
+        exercise_id: 'oblique_crunch',
+        exercise_name: '斜腹轉體 (單車捲腹)',
+        exercise_index: 0,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/bicycle-crunch.gif',
+          alt_text: '單車捲腹示範',
+          cue: '旋轉擠壓側腹肌群，持續維持腹部張力',
+        },
+        grip_type: '雙手輕觸耳側',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 16, rule: '推滿 16 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'lying_leg_raise',
+        exercise_name: '仰臥交替抬腿',
+        exercise_index: 1,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/scissors-kick.gif',
+          alt_text: '仰臥抬腿示範',
+          cue: '下腹發力穩定骨盆，慢速下放不借力',
+        },
+        grip_type: '徒手平躺',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 16, rule: '推滿 16 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'plank_core',
+        exercise_name: '平板支撐核心極限',
+        exercise_index: 2,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/plank.gif',
+          alt_text: '平板支撐示範',
+          cue: '腹肌極限收縮，肩胛推滿不聳肩',
+        },
+        grip_type: '手肘撐地',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 0, reps: 50, rule: '撐滿 50 秒即完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'quadruped_donkey_kick',
+        exercise_name: '跪姿屈膝提膝',
+        exercise_index: 3,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/donkey-kick.gif',
+          alt_text: '提膝示範',
+          cue: '提膝向前收緊腹肌下段，穩定吐氣',
+        },
+        grip_type: '雙手手掌撐地',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 0, reps: 14, rule: '推滿 14 下完成' },
+        safety_status: 'NORMAL',
+      },
+    ],
+  },
+
+  // 0.3 30日焦點專項 — 臀部 (Glutes & Hips)
+  {
+    id: 'glutes_focus',
+    name: '30日焦點 — 臀部塑形',
+    shortTitle: '臀部',
+    tagline: '在家進行 • 提臀微笑線 • 飽滿蜜桃',
+    category: 'SpecialFocus',
+    categoryLabel: '30日專項焦點',
+    description: '專為蜜桃臀打造的高孤立刺激課表，結合跪姿屈膝抬腿、仰臥橋式提臀與保加利亞分腿蹲。',
+    targetFocus: '臀大肌 / 臀中肌 / 膕繩肌',
+    equipment: '無需器材 / 輕配重',
+    duration: '22 分鐘',
+    level: '全階段通用',
+    caloriesBurn: 290,
+    exercises: [
+      {
+        exercise_id: 'quadruped_donkey_kick',
+        exercise_name: '跪姿屈膝抬腿 (Donkey Kick)',
+        exercise_index: 0,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/donkey-kick.gif',
+          alt_text: '跪姿屈膝抬腿示範',
+          cue: '腳跟朝向天花板頂出，臀大肌頂峰收縮停頓 1 秒',
+        },
+        grip_type: '雙手手掌撐地',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 15, rule: '推滿 15 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'glute_bridge',
+        exercise_name: '仰臥橋式提臀 (Glute Bridge)',
+        exercise_index: 1,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/glute-bridge.gif',
+          alt_text: '仰臥橋式提臀示範',
+          cue: '腳後跟發力將臀部推起至身軀一線，夾緊臀大肌',
+        },
+        grip_type: '徒手平躺',
+        current_set: 1,
+        total_sets: 4,
+        target_load: { weight_kg: 0, reps: 16, rule: '推滿 16 下完成' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'bulgarian_split_squat',
+        exercise_name: '保加利亞分腿蹲',
+        exercise_index: 2,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/bulgarian-split-squat.gif',
+          alt_text: '保加利亞分腿蹲示範',
+          cue: '後腳背搭於板凳，前腳踩穩重心下沉，臀肌強烈刺激',
+        },
+        grip_type: '雙手垂持',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 8, reps: 10, rule: '滿 12 下自動解鎖升重' },
+        safety_status: 'NORMAL',
+      },
+      {
+        exercise_id: 'goblet_squat',
+        exercise_name: '啞鈴高腳杯深蹲',
+        exercise_index: 3,
+        total_exercises: 4,
+        media: {
+          type: 'gif',
+          url: '/exercises/goblet-squat.gif',
+          alt_text: '啞鈴高腳杯深蹲示範',
+          cue: '啞鈴垂直抱於胸前，膝蓋順應腳尖方向蹲下至大腿平行',
+        },
+        grip_type: '托握啞鈴',
+        current_set: 1,
+        total_sets: 3,
+        target_load: { weight_kg: 16, reps: 12, rule: '滿 12 下自動解鎖升重' },
+        safety_status: 'NORMAL',
+      },
+    ],
+  },
   // 1. 推拉腿 - 推日 (Push)
   {
     id: 'ppl_push',

@@ -29,6 +29,13 @@ export default function TopNavbar({ onToggleDemoBar, showDemoBar }: TopNavbarPro
 
   // Dynamic header title matching the 5 screens in the reference app!
   const getHeaderTitle = () => {
+    if (activeTab === 'plans') {
+      return (
+        <span>
+          訓練<span className="text-[#00D09C] ml-0.5">計畫</span>
+        </span>
+      );
+    }
     if (activeTab === 'diet') {
       return (
         <span>
@@ -60,7 +67,7 @@ export default function TopNavbar({ onToggleDemoBar, showDemoBar }: TopNavbarPro
     }
     return (
       <span>
-        訓練<span className="text-[#00D09C] ml-0.5">計畫</span>
+        30日<span className="text-[#00D09C] ml-0.5">計畫</span>
       </span>
     );
   };
@@ -86,9 +93,9 @@ export default function TopNavbar({ onToggleDemoBar, showDemoBar }: TopNavbarPro
           <div className="flex items-center gap-2">
             {/* Plan Switcher Chip */}
             <button
-              onClick={() => setShowPlanModal(true)}
+              onClick={() => setActiveTab('plans')}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#16223F] hover:bg-[#1E2D52] border border-[#233560] text-xs text-slate-200 transition-colors shadow-sm"
-              title="切換課表分化"
+              title="切換計畫選擇頁面"
             >
               <Layers className="w-3.5 h-3.5 text-[#00D09C] shrink-0" />
               <span className="truncate font-semibold max-w-[110px] sm:max-w-[150px] text-[11px]">

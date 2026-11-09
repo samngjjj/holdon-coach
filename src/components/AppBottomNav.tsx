@@ -1,26 +1,28 @@
 // ============================================================
-// HoldOn Coach — Clean Bottom Navigation Bar (Mint Green Accent)
+// HoldOn Coach — Clean Bottom Navigation Bar (5 Tabs)
+// 包含訓練計畫 (Screen 1)、30日訓練 (Screen 2/3)、飲食記錄、進度分析 (Screen 5)、AI 教練
 // ============================================================
 
 'use client';
 
 import { motion } from 'framer-motion';
-import { Dumbbell, Utensils, TrendingUp, Bot } from 'lucide-react';
+import { LayoutGrid, Dumbbell, Utensils, TrendingUp, Bot } from 'lucide-react';
 import { useWorkoutStore, type AppTab } from '@/stores/workoutStore';
 
 export default function AppBottomNav() {
   const { activeTab, setActiveTab } = useWorkoutStore();
 
   const tabs: { key: AppTab; label: string; icon: any; badge?: string }[] = [
-    { key: 'workout', label: '訓練動作', icon: Dumbbell },
+    { key: 'plans', label: '訓練計畫', icon: LayoutGrid },
+    { key: 'workout', label: '30日訓練', icon: Dumbbell },
     { key: 'diet', label: '飲食記錄', icon: Utensils },
     { key: 'progress', label: '進度分析', icon: TrendingUp },
     { key: 'chat', label: 'AI 教練', icon: Bot, badge: '專屬' },
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-3 py-2">
-      <div className="max-w-md mx-auto grid grid-cols-4 gap-1">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-lg px-2 py-1.5">
+      <div className="max-w-md mx-auto grid grid-cols-5 gap-0.5">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.key;
           const Icon = tab.icon;
@@ -29,7 +31,7 @@ export default function AppBottomNav() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`relative flex flex-col items-center justify-center py-1.5 rounded-2xl transition-all ${
+              className={`relative flex flex-col items-center justify-center py-1.5 px-0.5 rounded-2xl transition-all ${
                 isActive
                   ? 'text-[#00A87E] font-black'
                   : 'text-slate-400 hover:text-slate-600 font-medium'
@@ -51,13 +53,13 @@ export default function AppBottomNav() {
                   }`}
                 />
                 {tab.badge && (
-                  <span className="absolute -top-1 -right-3.5 px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-[#FF6B4A] text-white shadow-xs">
+                  <span className="absolute -top-1 -right-3 px-1 py-0.2 rounded-full text-[8px] font-extrabold bg-[#FF6B4A] text-white shadow-xs">
                     {tab.badge}
                   </span>
                 )}
               </div>
 
-              <span className="text-[11px] relative z-10">{tab.label}</span>
+              <span className="text-[10px] tracking-tight relative z-10">{tab.label}</span>
             </button>
           );
         })}

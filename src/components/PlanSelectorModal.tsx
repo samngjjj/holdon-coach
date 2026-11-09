@@ -25,6 +25,7 @@ export default function PlanSelectorModal({ isOpen, onClose }: PlanSelectorModal
   };
 
   const categories = [
+    { key: 'SpecialFocus', label: '🔥 30日焦點專項 (腹部/臀部)' },
     { key: 'PPL', label: '推拉腿 (PPL)' },
     { key: 'UpperLower', label: '二分化 (Upper / Lower)' },
     { key: 'BroSplit', label: '五分化 (Bro Split)' },

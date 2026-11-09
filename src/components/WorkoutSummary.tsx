@@ -268,8 +268,16 @@ export default function WorkoutSummary() {
           </div>
         </div>
 
-        {/* Reset button */}
-        <div className="pt-2">
+        {/* Reset button & Plan Selection */}
+        <div className="pt-2 space-y-2">
+          <motion.button
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setActiveTab('plans')}
+            className="w-full py-3.5 rounded-2xl bg-[#0B132B] hover:bg-[#16223F] text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
+          >
+            <span>瀏覽其他訓練計畫 (腹部/臀部/推拉腿) →</span>
+          </motion.button>
+
           <motion.button
             whileTap={{ scale: 0.98 }}
             onClick={resetSession}

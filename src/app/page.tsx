@@ -19,6 +19,7 @@ import HardLimitWarning from '@/components/HardLimitWarning';
 import DietTrackerView from '@/components/DietTrackerView';
 import ProgressAnalyticsView from '@/components/ProgressAnalyticsView';
 import AICoachChatView from '@/components/AICoachChatView';
+import PlanSelectionView from '@/components/PlanSelectionView';
 import AppBottomNav from '@/components/AppBottomNav';
 
 export default function Home() {
@@ -51,7 +52,9 @@ export default function Home() {
 
       {/* Main Tab Content */}
       <div className="flex-1 flex flex-col">
-        {activeTab === 'diet' ? (
+        {activeTab === 'plans' ? (
+          <PlanSelectionView key="tab-plans" />
+        ) : activeTab === 'diet' ? (
           <DietTrackerView key="tab-diet" />
         ) : activeTab === 'progress' ? (
           <ProgressAnalyticsView key="tab-progress" />

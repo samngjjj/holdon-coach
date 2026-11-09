@@ -60,7 +60,7 @@ export interface SetRecord {
 // ============================================================
 // Workout State Interface
 // ============================================================
-export type AppTab = 'workout' | 'diet' | 'progress' | 'chat';
+export type AppTab = 'plans' | 'workout' | 'diet' | 'progress' | 'chat';
 
 interface WorkoutState {
   // Navigation
