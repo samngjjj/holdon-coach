@@ -57,6 +57,109 @@ export interface SetRecord {
   timestamp: number;
 }
 
+export interface MuscleGroupRecovery {
+  id: string;
+  name: string;
+  latinName: string;
+  recoveryPct: number; // 0 - 100
+  lastTrainedHoursAgo: number;
+  status: 'fatigued' | 'recovering' | 'ready';
+  lastWorkoutName: string;
+  estimatedReadyHours: number;
+  aiTip: string;
+}
+
+export const INITIAL_MUSCLE_RECOVERIES: MuscleGroupRecovery[] = [
+  {
+    id: 'chest',
+    name: '胸大肌',
+    latinName: 'Pectoralis Major',
+    recoveryPct: 25,
+    lastTrainedHoursAgo: 2,
+    status: 'fatigued',
+    lastWorkoutName: 'Jeff Nippard 終極推日',
+    estimatedReadyHours: 42,
+    aiTip: '正處於微肌纖維撕裂與發炎期，嚴禁高強度推舉，建議充分補充蛋白質。',
+  },
+  {
+    id: 'triceps',
+    name: '肱三頭肌',
+    latinName: 'Triceps Brachii',
+    recoveryPct: 30,
+    lastTrainedHoursAgo: 2,
+    status: 'fatigued',
+    lastWorkoutName: 'Jeff Nippard 終極推日',
+    estimatedReadyHours: 36,
+    aiTip: '長頭延展位疲勞中，適合做輕度動態伸展，避免肘關節過度鎖死。',
+  },
+  {
+    id: 'deltoids',
+    name: '三角肌 (前/中/後)',
+    latinName: 'Deltoideus',
+    recoveryPct: 45,
+    lastTrainedHoursAgo: 14,
+    status: 'recovering',
+    lastWorkoutName: '肩胛平面側平舉',
+    estimatedReadyHours: 24,
+    aiTip: '肌纖維超量恢復中，神經疲勞已趨緩，明日可恢復輕度負載。',
+  },
+  {
+    id: 'back',
+    name: '背部肌群 (背闊/上背)',
+    latinName: 'Latissimus Dorsi',
+    recoveryPct: 95,
+    lastTrainedHoursAgo: 68,
+    status: 'ready',
+    lastWorkoutName: '垂直下拉與胸托划船',
+    estimatedReadyHours: 0,
+    aiTip: '肌糖原與肌原纖維已 100% 超量恢復，今日強烈推薦轟炸背部（Pull Day）！',
+  },
+  {
+    id: 'biceps',
+    name: '肱二頭肌',
+    latinName: 'Biceps Brachii',
+    recoveryPct: 100,
+    lastTrainedHoursAgo: 68,
+    status: 'ready',
+    lastWorkoutName: '45° 上斜二頭彎舉',
+    estimatedReadyHours: 0,
+    aiTip: '狀態頂峰，握力與長頭神經募集感處於最佳生理週期。',
+  },
+  {
+    id: 'quads',
+    name: '股四頭肌',
+    latinName: 'Quadriceps Femoris',
+    recoveryPct: 90,
+    lastTrainedHoursAgo: 72,
+    status: 'ready',
+    lastWorkoutName: '高腳杯深蹲與分腿蹲',
+    estimatedReadyHours: 0,
+    aiTip: '膝關節滑液與股四頭肌完全就緒，可承受大重量機械張力。',
+  },
+  {
+    id: 'hamstrings_glutes',
+    name: '臀大肌與膕繩肌',
+    latinName: 'Gluteus & Hamstrings',
+    recoveryPct: 88,
+    lastTrainedHoursAgo: 72,
+    status: 'ready',
+    lastWorkoutName: 'RDL 羅馬尼亞硬舉',
+    estimatedReadyHours: 0,
+    aiTip: '後側動力鏈修復完成，適合進行重載髖鉸鏈（Hip Hinge）訓練。',
+  },
+  {
+    id: 'core',
+    name: '腹部核心肌群',
+    latinName: 'Core & Abdominals',
+    recoveryPct: 80,
+    lastTrainedHoursAgo: 24,
+    status: 'ready',
+    lastWorkoutName: '骨盆後傾捲動與長力臂平板',
+    estimatedReadyHours: 0,
+    aiTip: '抗伸展等長收縮能力良好，可配合任何全身課表穩定脊椎。',
+  },
+];
+
 // ============================================================
 // Workout State Interface
 // ============================================================
@@ -101,6 +204,18 @@ interface WorkoutState {
   showPlanEditorModal: boolean;
   setShowPlanEditorModal: (show: boolean) => void;
   isListening: boolean;
+
+  // Feature 1: Shareable PR & Workout Card Modal
+  showShareCardModal: boolean;
+  setShowShareCardModal: (show: boolean) => void;
+
+  // Feature 2: 2D/3D Muscular Recovery Heatmap
+  showHeatmapModal: boolean;
+  setShowHeatmapModal: (show: boolean) => void;
+  selectedHeatmapMuscle: string | null;
+  setSelectedHeatmapMuscle: (id: string | null) => void;
+  muscleRecoveries: MuscleGroupRecovery[];
+  updateMuscleRecoveryAfterWorkout: (planId: string) => void;
 
   // History & Trends
   history: WorkoutHistoryEntry[];
@@ -513,6 +628,50 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   showPlanEditorModal: false,
   setShowPlanEditorModal: (show) => set({ showPlanEditorModal: show }),
   isListening: false,
+
+  // Feature 1: Shareable PR & Workout Card Modal
+  showShareCardModal: false,
+  setShowShareCardModal: (show) => set({ showShareCardModal: show }),
+
+  // Feature 2: 2D/3D Muscular Recovery Heatmap
+  showHeatmapModal: false,
+  setShowHeatmapModal: (show) => set({ showHeatmapModal: show }),
+  selectedHeatmapMuscle: null,
+  setSelectedHeatmapMuscle: (id) => set({ selectedHeatmapMuscle: id }),
+  muscleRecoveries: INITIAL_MUSCLE_RECOVERIES,
+  updateMuscleRecoveryAfterWorkout: (planId: string) => {
+    const list = [...get().muscleRecoveries];
+    const isPush = planId.includes('push') || planId.includes('chest');
+    const isPull = planId.includes('pull');
+    const isLegs = planId.includes('legs') || planId.includes('glutes');
+    const isCore = planId.includes('belly') || planId.includes('abs') || planId.includes('fat_loss');
+    const isUpper = planId.includes('upper');
+    const isLower = planId.includes('lower');
+
+    const updated = list.map((m) => {
+      let isTargeted = false;
+      if (isPush && (m.id === 'chest' || m.id === 'triceps' || m.id === 'deltoids')) isTargeted = true;
+      if (isPull && (m.id === 'back' || m.id === 'biceps' || m.id === 'deltoids')) isTargeted = true;
+      if (isLegs && (m.id === 'quads' || m.id === 'hamstrings_glutes')) isTargeted = true;
+      if (isCore && m.id === 'core') isTargeted = true;
+      if (isUpper && (m.id === 'chest' || m.id === 'back' || m.id === 'deltoids' || m.id === 'biceps' || m.id === 'triceps')) isTargeted = true;
+      if (isLower && (m.id === 'quads' || m.id === 'hamstrings_glutes' || m.id === 'core')) isTargeted = true;
+
+      if (isTargeted) {
+        return {
+          ...m,
+          recoveryPct: Math.floor(Math.random() * 10) + 18,
+          lastTrainedHoursAgo: 0,
+          status: 'fatigued' as const,
+          estimatedReadyHours: 48,
+          lastWorkoutName: get().session.plan_name,
+        };
+      }
+      return m;
+    });
+
+    set({ muscleRecoveries: updated });
+  },
 
   history: getStoredHistory(),
   totalVolumeKg: 0,
@@ -1129,8 +1288,11 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       localStorage.setItem('holdon_workout_history', JSON.stringify(updatedHistory));
     } catch {}
 
+    get().updateMuscleRecoveryAfterWorkout(state.session.plan_id);
+
     set({
       showSummary: true,
+      showShareCardModal: true,
       isResting: false,
       history: updatedHistory,
       session: {

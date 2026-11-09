@@ -21,6 +21,7 @@ import ProgressAnalyticsView from '@/components/ProgressAnalyticsView';
 import AICoachChatView from '@/components/AICoachChatView';
 import PlanSelectionView from '@/components/PlanSelectionView';
 import AppBottomNav from '@/components/AppBottomNav';
+import ShareablePRCardModal from '@/components/ShareablePRCardModal';
 
 export default function Home() {
   const {
@@ -88,6 +89,9 @@ export default function Home() {
 
       {/* Bottom Tab Navigation Bar */}
       <AppBottomNav />
+
+      {/* Feature 1: Shareable Instagram/Threads PR Brag Card Modal */}
+      <ShareablePRCardModal />
     </main>
   );
 }

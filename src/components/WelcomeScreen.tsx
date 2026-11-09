@@ -67,30 +67,36 @@ export default function WelcomeScreen() {
         animate={{ opacity: 1, y: 0 }}
         className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200/80 mb-5 relative"
       >
-        {/* Banner with Orange Badge */}
-        <div className="relative h-40 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 flex items-center justify-between px-6 overflow-hidden">
-          {/* Subtle Background Pattern */}
-          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#00D09C_1px,transparent_1px)] [background-size:16px_16px]" />
+        {/* Banner with Orange Badge & Home Workout Photo (Screen 2: 30日計畫 Exact Match) */}
+        <div className="relative h-44 sm:h-48 flex items-center justify-between px-6 overflow-hidden">
+          {/* Background Real Workout Photo */}
+          <img
+            src="/images/plans/home_workout_couple.jpg"
+            alt="30日計畫在家進行"
+            className="absolute inset-0 w-full h-full object-cover object-center"
+          />
+          {/* Dark Contrast Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0B132B]/95 via-[#0B132B]/85 to-transparent" />
           
-          {/* Top Left Orange Tag: '在家進行' / '雙重漸進' */}
-          <div className="absolute top-0 left-0 bg-[#FF6B4A] text-white text-xs font-bold px-4 py-1.5 rounded-br-2xl shadow-md flex items-center gap-1 z-10">
-            <span>在家 / 健身房進行</span>
+          {/* Top Left Orange Tag: '在家進行' (Screen 2 1:1 還原) */}
+          <div className="absolute top-0 left-0 bg-[#FF6B4A] text-white text-xs font-black px-4 py-1.5 rounded-br-2xl shadow-lg flex items-center gap-1 z-10 tracking-wide">
+            <span>在家進行</span>
           </div>
 
-          <div className="relative z-10 pt-4 text-left">
+          <div className="relative z-10 pt-4 text-left max-w-[70%]">
             <span className="text-[#00D09C] text-xs font-extrabold uppercase tracking-wider block mb-1">
               30日挑戰 • 第 4 天
             </span>
-            <h2 className="text-2xl font-black text-white tracking-tight leading-tight">
+            <h2 className="text-2xl font-black text-white tracking-tight leading-tight drop-shadow-sm">
               {session.plan_name.split('—')[0]}
             </h2>
-            <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
-              <span>🎯 目標：推滿 12 下自動升重 • 肩膀痛即刻煞車</span>
+            <p className="text-xs text-slate-200 mt-1 flex items-center gap-1">
+              <span>🎯 推滿 12 下自動升重 • 肩膀痛即刻煞車</span>
             </p>
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2.5 flex items-center gap-2">
               <button
                 onClick={() => setActiveTab('plans')}
-                className="px-2.5 py-1 rounded-full bg-white/15 hover:bg-white/25 text-white text-[11px] font-bold border border-white/20 transition-all flex items-center gap-1"
+                className="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-md text-white text-[11px] font-bold border border-white/20 transition-all flex items-center gap-1 shadow-xs"
               >
                 <span>更換計畫</span>
                 <ChevronRight className="w-3 h-3 text-[#00D09C]" />

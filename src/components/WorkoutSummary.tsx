@@ -32,6 +32,7 @@ export default function WorkoutSummary() {
     resetSession,
     setActiveTab,
     dietRecord,
+    setShowShareCardModal,
   } = useWorkoutStore();
 
   const stats = useMemo(() => {
@@ -114,6 +115,20 @@ export default function WorkoutSummary() {
           <p className="text-xs text-slate-500 mt-2">
             課表：{session.plan_name} • 完整完成所有動作模組
           </p>
+
+          {/* Feature 1: Instagram / Threads Brag Card Trigger */}
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setShowShareCardModal(true)}
+            className="w-full mt-4 py-3.5 px-4 rounded-2xl bg-gradient-to-r from-[#0B132B] via-slate-900 to-[#162752] text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-900/25 border border-slate-700/60 hover:border-[#00D09C]/50 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-[#00D09C]" />
+            <span>📸 生成 IG / 脆 (Threads) 炫耀戰績卡片</span>
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#00D09C]/20 text-[#00D09C] border border-[#00D09C]/30 ml-1">
+              一鍵分享
+            </span>
+          </motion.button>
         </motion.div>
 
         {/* 3 Metric Pills */}

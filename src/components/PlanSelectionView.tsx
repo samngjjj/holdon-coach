@@ -49,211 +49,158 @@ export default function PlanSelectionView() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#F1F5F9] pb-24 text-slate-900">
-      {/* Hero Top Title Banner with Jeff Nippard Attribution */}
-      <div className="bg-[#0B132B] pt-6 pb-8 px-4 text-center text-white border-b border-[#1E293B]">
+    <div className="w-full min-h-screen bg-[#0B132B] pb-24 text-white">
+      {/* ============================================================ */}
+      {/* 1. Header (1:1 還原用戶上傳之 Screen 1「訓練計畫」標題) */}
+      {/* ============================================================ */}
+      <div className="pt-8 pb-6 px-4 text-center">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md mx-auto"
         >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#00D09C]/15 border border-[#00D09C]/30 text-[#00D09C] text-xs font-black mb-3">
-            <Sparkles className="w-3.5 h-3.5" />
-            🔬 Jeff Nippard 科學肌肥大系統 (Evidence-Based)
-          </div>
-          <h1 className="text-3xl font-black tracking-tight">
-            訓練<span className="text-[#00D09C] ml-1">計畫</span>
+          <h1 className="text-3xl sm:text-4xl font-black text-white tracking-wider inline-flex items-center justify-center gap-1">
+            <span>訓練</span>
+            <span className="text-[#00D09C] relative inline-block">
+              計畫
+              <span className="absolute -bottom-1.5 left-0 right-0 h-[3.5px] bg-[#00D09C] rounded-full" />
+            </span>
           </h1>
-          <p className="text-xs text-slate-300 mt-1.5 leading-relaxed">
-            長肌纖維拉伸超量肌肥大 • 最佳肌電圖力線 • 雙重漸進 RIR 1-2
+          <p className="text-xs text-slate-400 mt-2 font-medium">
+            Jeff Nippard 科學肌肥大 • 長肌纖維拉伸 • 雙重漸進 (RIR 1-2)
           </p>
         </motion.div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 -mt-4 space-y-5">
+      <div className="max-w-md mx-auto px-4 space-y-6">
         {/* ============================================================ */}
-        {/* 1. 三大焦點專項卡片 (1:1 還原用戶上傳之 Screen 1「訓練計畫」) */}
+        {/* 2. 三大焦點專項白色卡片 (1:1 精確還原用戶截圖之白色圓角大卡片) */}
         {/* ============================================================ */}
-        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-md overflow-hidden divide-y divide-slate-100">
-          {/* Card 1: 腹部減脂 */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-white rounded-[28px] sm:rounded-[32px] overflow-hidden shadow-2xl border border-white/10 divide-y divide-slate-100"
+        >
+          {/* Row 1: 腹部減脂 */}
           <motion.div
             whileTap={{ scale: 0.99 }}
             onClick={() => {
               const plan = WORKOUT_PLANS.find((p) => p.id === 'fat_loss_belly') || heroPlans[0];
               setPreviewPlan(plan);
             }}
-            className="group relative flex items-center justify-between p-4 sm:p-5 cursor-pointer hover:bg-slate-50/80 transition-colors"
+            className="group relative flex items-center justify-between min-h-[130px] sm:min-h-[145px] pl-6 sm:pl-8 cursor-pointer hover:bg-slate-50/90 transition-colors overflow-hidden"
           >
-            <div className="flex-1 pr-3 z-10">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-50 text-rose-600 border border-rose-200">
-                  🔥 燃脂 280 kcal
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                  骨盆後傾捲動
-                </span>
-              </div>
-              <h2 className="text-2xl font-black text-slate-900 group-hover:text-[#00A87E] transition-colors">
+            <div className="flex-1 pr-3 z-10 py-4">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight group-hover:text-[#00A87E] transition-colors">
                 腹部減脂
               </h2>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                Jeff Nippard 抗伸展長力臂 • 消除腰腹贅肉
-              </p>
-              <div className="mt-2.5 flex items-center gap-1 text-xs font-extrabold text-[#00A87E]">
-                <span>查看科學課表</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <div className="mt-2 flex items-center gap-2">
+                {session.plan_id === 'fat_loss_belly' ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#00D09C] text-white shadow-xs">
+                    進行中
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-400 group-hover:text-[#00A87E] transition-colors flex items-center gap-0.5">
+                    查看課表 <ChevronRight className="w-3.5 h-3.5 inline" />
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Visual Graphic Right Side (Waist Silhouette) */}
-            <div className="w-28 sm:w-32 h-28 shrink-0 relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-rose-50 via-sky-50 to-emerald-50 overflow-hidden border border-slate-100">
-              <svg viewBox="0 0 120 120" className="w-full h-full p-1" fill="none">
-                <circle cx="60" cy="60" r="50" fill="#F8FAFC" />
-                <path
-                  d="M 28 30 C 22 55, 18 75, 26 95 L 42 95 C 44 75, 42 55, 38 30 Z"
-                  fill="#E2E8F0"
-                  opacity="0.8"
-                />
-                <path
-                  d="M 68 25 C 80 45, 66 60, 84 95 L 102 95 C 104 65, 96 45, 88 25 Z"
-                  fill="#FDA4AF"
-                />
-                <path
-                  d="M 74 38 C 70 52, 70 65, 78 78"
-                  stroke="#F43F5E"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-                <path
-                  d="M 50 58 Q 72 65 95 56"
-                  stroke="#00D09C"
-                  strokeWidth="2.5"
-                  strokeDasharray="3 3"
-                />
-                <circle cx="95" cy="56" r="3" fill="#00D09C" />
-              </svg>
-              {session.plan_id === 'fat_loss_belly' && (
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#00D09C] text-white shadow-xs">
-                  進行中
-                </span>
-              )}
+            <div className="w-36 sm:w-44 h-32 sm:h-36 shrink-0 relative overflow-hidden flex items-center justify-end">
+              <img
+                src="/images/plans/belly_fat_loss.jpg"
+                alt="腹部減脂"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
             </div>
           </motion.div>
 
-          {/* Card 2: 六塊腹肌 */}
+          {/* Row 2: 六塊腹肌 */}
           <motion.div
             whileTap={{ scale: 0.99 }}
             onClick={() => {
               const plan = WORKOUT_PLANS.find((p) => p.id === 'six_pack_abs') || heroPlans[1];
               setPreviewPlan(plan);
             }}
-            className="group relative flex items-center justify-between p-4 sm:p-5 cursor-pointer hover:bg-slate-50/80 transition-colors"
+            className="group relative flex items-center justify-between min-h-[130px] sm:min-h-[145px] pl-6 sm:pl-8 cursor-pointer hover:bg-slate-50/90 transition-colors overflow-hidden"
           >
-            <div className="flex-1 pr-3 z-10">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-600 border border-amber-200">
-                  ⚡ 核心撕裂
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                  主動脊柱屈曲
-                </span>
-              </div>
-              <h2 className="text-2xl font-black text-slate-900 group-hover:text-[#00A87E] transition-colors">
+            <div className="flex-1 pr-3 z-10 py-4">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight group-hover:text-[#00A87E] transition-colors">
                 六塊腹肌
               </h2>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                Jeff Nippard 上下腹募集 • 稜角分明雕刻
-              </p>
-              <div className="mt-2.5 flex items-center gap-1 text-xs font-extrabold text-[#00A87E]">
-                <span>查看科學課表</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <div className="mt-2 flex items-center gap-2">
+                {session.plan_id === 'six_pack_abs' ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#00D09C] text-white shadow-xs">
+                    進行中
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-400 group-hover:text-[#00A87E] transition-colors flex items-center gap-0.5">
+                    查看課表 <ChevronRight className="w-3.5 h-3.5 inline" />
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Visual Graphic Right Side (Six Pack Muscular Torso) */}
-            <div className="w-28 sm:w-32 h-28 shrink-0 relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 via-slate-50 to-orange-50 overflow-hidden border border-slate-100">
-              <svg viewBox="0 0 120 120" className="w-full h-full p-1" fill="none">
-                <path d="M 30 20 L 90 20 L 82 105 L 38 105 Z" fill="#E2E8F0" opacity="0.5" />
-                <path d="M 35 32 Q 60 40 85 32" stroke="#94A3B8" strokeWidth="3" strokeLinecap="round" />
-                <line x1="60" y1="36" x2="60" y2="100" stroke="#94A3B8" strokeWidth="2.5" />
-                <rect x="42" y="44" width="14" height="12" rx="3" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
-                <rect x="64" y="44" width="14" height="12" rx="3" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
-                <rect x="43" y="60" width="13" height="13" rx="3" fill="#F59E0B" opacity="0.8" />
-                <rect x="64" y="60" width="13" height="13" rx="3" fill="#F59E0B" opacity="0.8" />
-                <rect x="44" y="77" width="12" height="12" rx="3" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
-                <rect x="64" y="77" width="12" height="12" rx="3" fill="#CBD5E1" stroke="#94A3B8" strokeWidth="1.5" />
-                <path d="M 36 68 Q 42 75 42 85" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
-                <path d="M 84 68 Q 78 75 78 85" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" />
-              </svg>
-              {session.plan_id === 'six_pack_abs' && (
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#00D09C] text-white shadow-xs">
-                  進行中
-                </span>
-              )}
+            <div className="w-36 sm:w-44 h-32 sm:h-36 shrink-0 relative overflow-hidden flex items-center justify-end">
+              <img
+                src="/images/plans/six_pack_abs.jpg"
+                alt="六塊腹肌"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
             </div>
           </motion.div>
 
-          {/* Card 3: 臀部 */}
+          {/* Row 3: 臀部 */}
           <motion.div
             whileTap={{ scale: 0.99 }}
             onClick={() => {
               const plan = WORKOUT_PLANS.find((p) => p.id === 'glutes_focus') || heroPlans[2];
               setPreviewPlan(plan);
             }}
-            className="group relative flex items-center justify-between p-4 sm:p-5 cursor-pointer hover:bg-slate-50/80 transition-colors"
+            className="group relative flex items-center justify-between min-h-[130px] sm:min-h-[145px] pl-6 sm:pl-8 cursor-pointer hover:bg-slate-50/90 transition-colors overflow-hidden"
           >
-            <div className="flex-1 pr-3 z-10">
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-50 text-purple-600 border border-purple-200">
-                  🍑 翹臀塑形
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
-                  拉伸+縮短位雙峰
-                </span>
-              </div>
-              <h2 className="text-2xl font-black text-slate-900 group-hover:text-[#00A87E] transition-colors">
+            <div className="flex-1 pr-3 z-10 py-4">
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight group-hover:text-[#00A87E] transition-colors">
                 臀部
               </h2>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                Jeff Nippard 臀肌科學公式 • 飽滿微笑線
-              </p>
-              <div className="mt-2.5 flex items-center gap-1 text-xs font-extrabold text-[#00A87E]">
-                <span>查看科學課表</span>
-                <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              <div className="mt-2 flex items-center gap-2">
+                {session.plan_id === 'glutes_focus' ? (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#00D09C] text-white shadow-xs">
+                    進行中
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-bold text-slate-400 group-hover:text-[#00A87E] transition-colors flex items-center gap-0.5">
+                    查看課表 <ChevronRight className="w-3.5 h-3.5 inline" />
+                  </span>
+                )}
               </div>
             </div>
 
-            {/* Visual Graphic Right Side (Glutes & Leggings Curve) */}
-            <div className="w-28 sm:w-32 h-28 shrink-0 relative flex items-center justify-center rounded-2xl bg-gradient-to-br from-purple-50 via-pink-50 to-sky-50 overflow-hidden border border-slate-100">
-              <svg viewBox="0 0 120 120" className="w-full h-full p-1" fill="none">
-                <path
-                  d="M 45 22 Q 40 40 48 55 Q 60 75 52 110 L 68 110 Q 72 80 84 65 Q 92 48 80 22 Z"
-                  fill="#E9D5FF"
-                />
-                <path d="M 45 28 Q 62 34 80 28" stroke="#9333EA" strokeWidth="3.5" strokeLinecap="round" />
-                <path d="M 52 54 Q 75 70 82 58" stroke="#A855F7" strokeWidth="3" strokeLinecap="round" />
-                <path d="M 72 90 Q 82 78 80 68" stroke="#00D09C" strokeWidth="3" strokeLinecap="round" strokeDasharray="3 3" />
-                <polygon points="76,64 85,67 80,74" fill="#00D09C" />
-              </svg>
-              {session.plan_id === 'glutes_focus' && (
-                <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full text-[9px] font-black bg-[#00D09C] text-white shadow-xs">
-                  進行中
-                </span>
-              )}
+            <div className="w-36 sm:w-44 h-32 sm:h-36 shrink-0 relative overflow-hidden flex items-center justify-end">
+              <img
+                src="/images/plans/glutes_focus.jpg"
+                alt="臀部"
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white to-transparent pointer-events-none" />
             </div>
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* ============================================================ */}
         {/* 2. 更多訓練分化課表 (推拉腿 PPL、二分化、五分化) */}
         {/* ============================================================ */}
         <div className="pt-2">
           <div className="flex items-center justify-between mb-3 px-1">
-            <h3 className="text-base font-black text-slate-900 flex items-center gap-1.5">
+            <h3 className="text-sm font-black text-white flex items-center gap-1.5">
               <Dumbbell className="w-4 h-4 text-[#00D09C]" />
               Jeff Nippard 科學課表庫 ({WORKOUT_PLANS.length})
             </h3>
-            <span className="text-xs text-slate-400 font-bold">
+            <span className="text-[11px] text-slate-400 font-bold">
               雙重漸進 (8-12RM)
             </span>
           </div>
@@ -272,8 +219,8 @@ export default function PlanSelectionView() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
                   selectedCategory === cat.id
-                    ? 'bg-[#0B132B] text-white shadow-sm'
-                    : 'bg-white text-slate-600 border border-slate-200/80 hover:bg-slate-50'
+                    ? 'bg-[#00D09C] text-slate-950 shadow-sm font-black'
+                    : 'bg-[#152347] text-slate-300 border border-slate-700/60 hover:bg-[#1A2C5B]'
                 }`}
               >
                 {cat.label}
@@ -291,40 +238,40 @@ export default function PlanSelectionView() {
                   key={plan.id}
                   whileTap={{ scale: 0.99 }}
                   onClick={() => setPreviewPlan(plan)}
-                  className={`bg-white rounded-3xl p-4 sm:p-5 border transition-all cursor-pointer shadow-sm hover:shadow-md ${
+                  className={`bg-[#132042] rounded-3xl p-4 sm:p-5 border transition-all cursor-pointer shadow-sm hover:shadow-md ${
                     isCurrent
-                      ? 'border-[#00D09C] ring-2 ring-[#00D09C]/20'
-                      : 'border-slate-200/90 hover:border-slate-300'
+                      ? 'border-[#00D09C] ring-2 ring-[#00D09C]/30 bg-[#162752]'
+                      : 'border-slate-700/60 hover:border-slate-600'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#00D09C]/15 text-[#00D09C] border border-[#00D09C]/30">
                           {plan.categoryLabel}
                         </span>
                         {plan.nippardPrinciples?.scientificBasis && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-100">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/15 text-sky-300 border border-sky-500/30">
                             🔬 {plan.nippardPrinciples.scientificBasis.split('+')[0]}
                           </span>
                         )}
                         {plan.duration && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 flex items-center gap-1">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 flex items-center gap-1 border border-slate-700">
                             <Clock className="w-2.5 h-2.5" />
                             {plan.duration}
                           </span>
                         )}
                       </div>
 
-                      <h4 className="text-base font-black text-slate-900">
+                      <h4 className="text-base font-black text-white">
                         {plan.name}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      <p className="text-xs text-slate-300 mt-1 leading-relaxed">
                         {plan.description}
                       </p>
 
-                      <div className="mt-3 flex items-center gap-3 text-xs text-slate-600 flex-wrap">
-                        <span className="font-bold text-slate-700">
+                      <div className="mt-3 flex items-center gap-3 text-xs text-slate-400 flex-wrap">
+                        <span className="font-bold text-slate-200">
                           🎯 {plan.targetFocus}
                         </span>
                         <span>•</span>
@@ -334,12 +281,12 @@ export default function PlanSelectionView() {
 
                     <div className="shrink-0 flex flex-col items-end justify-between self-stretch">
                       {isCurrent ? (
-                        <span className="px-2 py-1 rounded-full text-[10px] font-black bg-[#00D09C] text-white flex items-center gap-1 shadow-sm">
-                          <Check className="w-3 h-3" />
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-black bg-[#00D09C] text-slate-950 flex items-center gap-1 shadow-sm">
+                          <Check className="w-3 h-3 stroke-[3]" />
                           使用中
                         </span>
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-[#00D09C]/20 group-hover:text-[#00A87E] transition-colors">
+                        <div className="w-8 h-8 rounded-full bg-slate-800/80 border border-slate-700 flex items-center justify-center text-slate-400 group-hover:bg-[#00D09C]/20 group-hover:text-[#00D09C] transition-colors">
                           <ArrowRight className="w-4 h-4" />
                         </div>
                       )}

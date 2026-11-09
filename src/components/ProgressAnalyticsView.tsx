@@ -29,6 +29,7 @@ import {
 } from 'recharts';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { calculateProfileStats } from '@/data/exercises';
+import MuscleRecoveryHeatmap from './MuscleRecoveryHeatmap';
 
 export default function ProgressAnalyticsView() {
   const { history, userProfile, setShowProfileModal } = useWorkoutStore();
@@ -209,6 +210,9 @@ export default function ProgressAnalyticsView() {
           <ChevronRight className="w-4 h-4" />
         </motion.button>
       </motion.div>
+
+      {/* Feature 2: 2D/3D 人體肌群疲勞恢復熱力圖 (Muscular Recovery Heatmap) */}
+      <MuscleRecoveryHeatmap />
 
       {/* 3. 8-Week Undulating Wave Progressive Overload Card (HoldOn Coach Core Science) */}
       <motion.div
