@@ -31,7 +31,7 @@ export default function Home() {
     activeTab,
   } = useWorkoutStore();
 
-  const [showDemoBar, setShowDemoBar] = useState(true);
+  const [showDemoBar, setShowDemoBar] = useState(false);
 
   const isWorkoutCompleted = showSummary || session.current_state === 'COMPLETED';
 

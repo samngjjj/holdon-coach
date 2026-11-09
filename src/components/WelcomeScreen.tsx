@@ -287,7 +287,7 @@ export default function WelcomeScreen() {
         <div className="flex items-center justify-between mb-3 px-1">
           <span className="text-sm font-black text-slate-800">推薦訓練計畫</span>
           <button
-            onClick={() => setShowPlanModal(true)}
+            onClick={() => setActiveTab('plans')}
             className="text-xs text-[#00A87E] font-bold hover:underline flex items-center gap-0.5"
           >
             <span>全部計畫 ({WORKOUT_PLANS.length})</span>
