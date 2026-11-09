@@ -1,5 +1,5 @@
 // ============================================================
-// HoldOn Coach — Pain Input (Body Area Selector)
+// HoldOn Coach — Pain Input (Clean White Theme)
 // ============================================================
 
 'use client';
@@ -31,26 +31,26 @@ export default function PainInput() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 bg-zinc-950/80 backdrop-blur-md flex items-end justify-center z-40 p-4"
+      className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 p-4"
       onClick={() => setShowPainInput(false)}
     >
       <motion.div
-        initial={{ y: 100, opacity: 0 }}
+        initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 100, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="w-full max-w-md bg-zinc-900 rounded-3xl p-6 border border-amber-500/30"
+        exit={{ y: 80, opacity: 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        className="w-full max-w-md bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl text-slate-800"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="text-center mb-4">
           <span className="text-3xl">⚠️</span>
-          <h3 className="text-lg font-bold text-amber-400 mt-2">
-            哪裡不舒服？
+          <h3 className="text-lg font-black text-slate-900 mt-2">
+            哪裡不舒服或卡卡的？
           </h3>
-          <p className="text-xs text-zinc-500 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             {safetyTier === 0
-              ? '教練會自動調整握法並降重保護你'
-              : '持續不適將直接更換為機械式動作'}
+              ? '教練會自動切換對握中立握法並降重 20% 保護關節'
+              : '持續不適將強制更換為固定軌跡機械式動作'}
           </p>
         </div>
 
@@ -60,19 +60,19 @@ export default function PainInput() {
               key={area.id}
               whileTap={{ scale: 0.95 }}
               onClick={() => handleSelect(area.label)}
-              className="flex flex-col items-center gap-1 p-3 rounded-2xl bg-zinc-800/80 border border-zinc-700/50 active:bg-amber-500/10 active:border-amber-500/30 transition-colors"
+              className="py-3 px-2 rounded-2xl bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-center transition-colors shadow-2xs"
             >
-              <span className="text-xl">{area.emoji}</span>
-              <span className="text-xs text-zinc-400">{area.label}</span>
+              <span className="text-lg block mb-0.5">{area.emoji}</span>
+              <span className="text-xs font-bold text-slate-700">{area.label}</span>
             </motion.button>
           ))}
         </div>
 
         <button
           onClick={() => setShowPainInput(false)}
-          className="w-full mt-4 py-2.5 text-sm text-zinc-500 hover:text-zinc-400 transition-colors"
+          className="w-full mt-4 py-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold transition-colors"
         >
-          取消，沒事
+          取消
         </button>
       </motion.div>
     </motion.div>

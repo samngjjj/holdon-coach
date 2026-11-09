@@ -1,6 +1,6 @@
 // ============================================================
-// HoldOn Coach — Welcome / Preview Screen
-// 支援多訓練計劃概覽、個人身體檔案入口與科學參數
+// HoldOn Coach — Welcome / 30-Day Plan Screen (模仿 30 Days Challenge / Leap Fitness)
+// 呈現 Screen 1「訓練計畫」與 Screen 2「30日計畫」日程清單與 Screen 4「動作清單」
 // ============================================================
 
 'use client';
@@ -8,30 +8,32 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Dumbbell,
-  Flame,
-  Shield,
-  Mic,
-  Layers,
+  Check,
   ChevronRight,
-  User,
-  TrendingUp,
-  Activity,
   ArrowUp,
   ArrowDown,
   RotateCcw,
   Edit3,
+  Coffee,
+  Calendar,
+  Layers,
+  Sparkles,
+  TrendingUp,
+  Activity,
+  Play,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
-import { calculateProfileStats } from '@/data/exercises';
+import { calculateProfileStats, WORKOUT_PLANS } from '@/data/exercises';
 import PlanSelectorModal from './PlanSelectorModal';
 import PlanEditorModal from './PlanEditorModal';
+import ExerciseIllustration from './ExerciseIllustration';
 
 export default function WelcomeScreen() {
   const {
     session,
     userProfile,
     startWorkout,
+    selectPlan,
     setShowProfileModal,
     setShowHistoryModal,
     showPlanEditorModal,
@@ -40,250 +42,296 @@ export default function WelcomeScreen() {
     moveExerciseDown,
     reverseExercisesOrder,
   } = useWorkoutStore();
+
   const [showPlanModal, setShowPlanModal] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(4); // Default to Day 4 (like screenshot)
 
   const stats = calculateProfileStats(userProfile);
 
-  const features = [
-    { icon: Dumbbell, label: '雙重漸進配重', desc: '推滿 12 下才解鎖升重' },
-    { icon: Shield, label: '關節安全防護', desc: '痛感或代償即時踩煞車' },
-    { icon: Flame, label: '練後營養加碼', desc: '累積訓練量同步碳水蛋白' },
-    { icon: Mic, label: '語音即時監聽', desc: '喊聲「痛」或「推完了」即辨識' },
+  // 30-Day Plan items modeled directly after Screen 2 in the user's photo!
+  const daysList = [
+    { day: 1, label: '第 1 天', status: 'completed', focus: '上斜臥推與胸肌基底' },
+    { day: 2, label: '第 2 天', status: 'completed', focus: '肩部與三頭線條' },
+    { day: 3, label: '第 3 天', status: 'completed', focus: '多角度發力掌握' },
+    { day: 4, label: '第 4 天', status: 'active', focus: `${session.plan_name} • 突破 12 下` },
+    { day: 5, label: '休息日', status: 'rest', focus: '超量恢復與肌纖維重構' },
+    { day: 6, label: '第 6 天', status: 'upcoming', focus: '中立握法抗阻推進' },
   ];
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, y: -30 }}
-      className="min-h-dvh flex flex-col items-center justify-start py-8 px-4 relative overflow-hidden"
-    >
-      {/* Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 pointer-events-none">
-        <motion.div
-          className="absolute inset-0 opacity-25"
-          animate={{
-            background: [
-              'radial-gradient(circle at 30% 40%, rgba(249,115,22,0.18) 0%, transparent 60%)',
-              'radial-gradient(circle at 70% 60%, rgba(245,158,11,0.18) 0%, transparent 60%)',
-              'radial-gradient(circle at 30% 40%, rgba(249,115,22,0.18) 0%, transparent 60%)',
-            ],
-          }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </div>
-
-      <div className="relative z-10 text-center max-w-md w-full">
-        {/* Logo & Slogan */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-          className="mb-6"
-        >
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 shadow-xl shadow-orange-500/25 mb-3">
-            <Dumbbell className="w-8 h-8 text-white" />
+    <div className="w-full max-w-xl mx-auto px-4 py-4 pb-24 text-slate-800">
+      {/* 1. Top 30-Day Plan Hero Card (Screen 2: 30日計畫 with Orange Tag) */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-200/80 mb-5 relative"
+      >
+        {/* Banner with Orange Badge */}
+        <div className="relative h-40 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 flex items-center justify-between px-6 overflow-hidden">
+          {/* Subtle Background Pattern */}
+          <div className="absolute inset-0 opacity-20 bg-[radial-gradient(#00D09C_1px,transparent_1px)] [background-size:16px_16px]" />
+          
+          {/* Top Left Orange Tag: '在家進行' / '雙重漸進' */}
+          <div className="absolute top-0 left-0 bg-[#FF6B4A] text-white text-xs font-bold px-4 py-1.5 rounded-br-2xl shadow-md flex items-center gap-1 z-10">
+            <span>在家 / 健身房進行</span>
           </div>
-          <h1 className="text-3xl font-black text-white tracking-tight">
-            教練先別加
-          </h1>
-          <p className="text-xs text-orange-400 font-mono tracking-widest uppercase mt-1">
-            HOLDON COACH • DYNAMIC LOAD & JOINT GUARD
-          </p>
-          <p className="text-xs text-zinc-400 mt-2 max-w-xs mx-auto">
-            「推滿 12 下再加重，肩膀痛我直接幫你踩煞車」
-          </p>
-        </motion.div>
 
-        {/* User Profile Mini Bar */}
-        <motion.div
-          initial={{ y: 15, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.15 }}
-          onClick={() => setShowProfileModal(true)}
-          className="bg-zinc-900/90 hover:bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-2xl p-3 mb-4 flex items-center justify-between cursor-pointer transition-all shadow-lg"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-sm">
-              <User className="w-4 h-4" />
-            </div>
-            <div className="text-left">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-white">{userProfile.name}</span>
-                <span className="text-[10px] text-zinc-400 font-mono">
-                  {userProfile.height_cm}cm / {userProfile.weight_kg}kg
-                </span>
-                {userProfile.body_fat_pct && (
-                  <span className="text-[10px] text-emerald-400 font-mono">
-                    BF {userProfile.body_fat_pct}%
+          <div className="relative z-10 pt-4 text-left">
+            <span className="text-[#00D09C] text-xs font-extrabold uppercase tracking-wider block mb-1">
+              30日挑戰 • 第 4 天
+            </span>
+            <h2 className="text-2xl font-black text-white tracking-tight leading-tight">
+              {session.plan_name.split('—')[0]}
+            </h2>
+            <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
+              <span>🎯 目標：推滿 12 下自動升重 • 肩膀痛即刻煞車</span>
+            </p>
+          </div>
+
+          {/* Quick Start Circle Floating Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={startWorkout}
+            className="w-14 h-14 rounded-full bg-[#00D09C] text-white flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0 z-10"
+            title="立即開練"
+          >
+            <Play className="w-6 h-6 fill-white ml-0.5" />
+          </motion.button>
+        </div>
+
+        {/* 30-Day Schedule Progression (Screen 2 checklist) */}
+        <div className="p-4 space-y-2.5 bg-white">
+          <div className="flex items-center justify-between pb-1 text-xs text-slate-400 font-semibold px-1">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-[#00D09C]" />
+              <span>本週訓練進度</span>
+            </span>
+            <span className="text-[11px] text-slate-500">已完成 3 / 30 天</span>
+          </div>
+
+          {daysList.map((item) => {
+            if (item.status === 'completed') {
+              return (
+                <div
+                  key={item.day}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100 transition-all"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-bold text-slate-700">{item.label}</span>
+                    <span className="text-xs text-slate-400 hidden xs:inline">{item.focus}</span>
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-emerald-100 text-[#00D09C] flex items-center justify-center font-bold">
+                    <Check className="w-4 h-4 stroke-[3]" />
+                  </div>
+                </div>
+              );
+            }
+
+            if (item.status === 'active') {
+              return (
+                <motion.div
+                  key={item.day}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={startWorkout}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-[#00D09C] text-white shadow-md shadow-emerald-500/25 cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="text-base font-extrabold tracking-tight">{item.label} (今日)</span>
+                    <span className="text-xs text-white/90 font-medium">
+                      {session.exercises.length} 個動作 • 建議 {session.exercises[0]?.target_load.weight_kg}kg
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-full border-2 border-white/80 flex items-center justify-center text-[11px] font-bold">
+                      0%
+                    </span>
+                  </div>
+                </motion.div>
+              );
+            }
+
+            if (item.status === 'rest') {
+              return (
+                <div
+                  key={item.day}
+                  className="flex items-center justify-between p-3 rounded-2xl bg-amber-50/60 border border-amber-100 text-amber-900"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Coffee className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-bold text-amber-800">{item.label}</span>
+                    <span className="text-xs text-amber-600/80">{item.focus}</span>
+                  </div>
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                    休息日
                   </span>
-                )}
+                </div>
+              );
+            }
+
+            return (
+              <div
+                key={item.day}
+                className="flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 border border-slate-100 text-slate-400"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium">{item.label}</span>
+                  <span className="text-xs text-slate-400">{item.focus}</span>
+                </div>
+                <div className="w-6 h-6 rounded-full border border-slate-200" />
               </div>
-              <p className="text-[11px] text-zinc-500">
-                建議起始配重：{stats.recommendedPressKg}kg • BMI {stats.bmi}
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-zinc-500" />
-        </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
 
-        {/* Active Plan Card with Switcher */}
-        <motion.div
-          initial={{ y: 15, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.25 }}
-          className="bg-zinc-900/90 backdrop-blur-xl rounded-3xl p-5 mb-5 border border-zinc-800/90 text-left shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-3 pb-3 border-b border-zinc-800">
-            <div className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-orange-400" />
-              <span className="text-xs font-bold text-zinc-300">今日訓練課表</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setShowPlanEditorModal(true)}
-                className="text-xs text-orange-400 hover:text-orange-300 font-semibold flex items-center gap-1 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-1 rounded-full border border-orange-500/25 transition-colors"
-                title="編輯課表或調整順序"
-              >
-                <Edit3 className="w-3 h-3" />
-                <span>編輯/調序</span>
-              </button>
-              <button
-                onClick={() => setShowPlanModal(true)}
-                className="text-xs text-zinc-400 hover:text-white font-semibold flex items-center gap-1 bg-zinc-800 hover:bg-zinc-700 px-2.5 py-1 rounded-full border border-zinc-700 transition-colors"
-              >
-                <span>切換分化</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
-            </div>
+      {/* 2. Screen 4 Style: 「今日動作清單 / 無需器材」 (Clean Minimalist Cards with Motion Arrows) */}
+      <div className="mb-5">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#00D09C]/15 text-[#00A87E] flex items-center gap-1">
+              <span>無需器械 / 啞鈴推薦</span>
+            </span>
+            <span className="text-sm font-black text-slate-800">今日動作清單</span>
           </div>
 
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="text-base font-bold text-white">
-              {session.plan_name}
-            </h3>
+          <div className="flex items-center gap-1.5">
             <button
               onClick={reverseExercisesOrder}
-              className="text-[11px] text-zinc-400 hover:text-orange-400 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-zinc-800/60 border border-zinc-750 transition-colors"
-              title="將動作次序前後完全調轉"
+              className="text-xs font-semibold text-slate-600 hover:text-[#00D09C] bg-white px-2.5 py-1 rounded-full border border-slate-200 shadow-sm flex items-center gap-1 transition-colors"
+              title="前後次序調轉"
             >
-              <RotateCcw className="w-3 h-3 text-orange-400" />
-              <span>次序前後調轉</span>
+              <RotateCcw className="w-3 h-3 text-[#00D09C]" />
+              <span>調轉順序</span>
+            </button>
+            <button
+              onClick={() => setShowPlanEditorModal(true)}
+              className="text-xs font-semibold text-white bg-[#0B132B] hover:bg-[#16223F] px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 transition-colors"
+            >
+              <Edit3 className="w-3 h-3 text-[#00D09C]" />
+              <span>編輯課表</span>
             </button>
           </div>
-          <p className="text-xs text-zinc-400 mb-4">
-            肌肥大安全目標：8–12 Reps • 滿 12 下連續兩組解鎖升重
-          </p>
+        </div>
 
-          {/* Exercise List */}
-          <div className="space-y-2.5">
-            {session.exercises.map((ex, i) => (
-              <div
-                key={ex.exercise_id}
-                className="flex items-center justify-between p-2.5 rounded-xl bg-zinc-800/40 border border-zinc-800/60 hover:border-zinc-700 transition-all"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="w-6 h-6 rounded-lg bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs font-mono shrink-0">
-                    {i + 1}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-white truncate">
-                      {ex.exercise_name}
-                    </p>
-                    <p className="text-[10px] text-zinc-500">
-                      {ex.grip_type}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <span className="text-xs font-bold text-orange-400 font-mono">
-                      {ex.target_load.weight_kg}kg
-                    </span>
-                    <span className="text-[10px] text-zinc-500 block">
-                      {ex.total_sets}組 × {ex.target_load.reps}下
-                    </span>
-                  </div>
-
-                  {/* Up / Down reorder arrows */}
-                  <div className="flex items-center gap-1 pl-1 border-l border-zinc-800">
-                    <button
-                      onClick={() => moveExerciseUp(i)}
-                      disabled={i === 0}
-                      title="上移動作"
-                      className="w-6 h-6 rounded bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-20 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
-                    >
-                      <ArrowUp className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => moveExerciseDown(i)}
-                      disabled={i === session.exercises.length - 1}
-                      title="下移動作"
-                      className="w-6 h-6 rounded bg-zinc-800/80 hover:bg-zinc-700 disabled:opacity-20 text-zinc-400 hover:text-white flex items-center justify-center transition-colors"
-                    >
-                      <ArrowDown className="w-3 h-3" />
-                    </button>
-                  </div>
+        {/* Stacked Clean Exercise Cards (Screen 4 Style) */}
+        <div className="space-y-2.5">
+          {session.exercises.map((ex, i) => (
+            <motion.div
+              key={`${ex.exercise_id}_${i}`}
+              layout
+              className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-3"
+            >
+              {/* Left Info */}
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="w-7 h-7 rounded-xl bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 font-mono">
+                  {i + 1}
+                </span>
+                <div className="min-w-0">
+                  <h4 className="text-sm font-bold text-slate-900 truncate">
+                    {ex.exercise_name}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-0.5 truncate">
+                    {ex.total_sets} 組 × {ex.target_load.reps} 次 • 目標 <span className="text-[#00D09C] font-bold">{ex.target_load.weight_kg}kg</span>
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </motion.div>
 
-        {/* Feature Highlights */}
-        <motion.div
-          initial={{ y: 15, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.35 }}
-          className="grid grid-cols-2 gap-2 mb-6"
-        >
-          {features.map((f) => (
-            <div
-              key={f.label}
-              className="bg-zinc-900/60 rounded-2xl p-3 border border-zinc-800/70 text-left"
-            >
-              <f.icon className="w-4 h-4 text-orange-400 mb-1" />
-              <p className="text-xs font-bold text-zinc-200">{f.label}</p>
-              <p className="text-[10px] text-zinc-500 mt-0.5">{f.desc}</p>
-            </div>
+              {/* Right: Motion Trajectory Thumbnail + Reorder Controls */}
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="w-16 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden p-1">
+                  <ExerciseIllustration
+                    exerciseId={ex.exercise_id}
+                    exerciseName={ex.exercise_name}
+                    className="w-full h-full scale-125"
+                  />
+                </div>
+
+                {/* Arrow up/down */}
+                <div className="flex flex-col gap-0.5">
+                  <button
+                    onClick={() => moveExerciseUp(i)}
+                    disabled={i === 0}
+                    className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-20 text-slate-600 flex items-center justify-center text-[10px]"
+                    title="上移"
+                  >
+                    <ArrowUp className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={() => moveExerciseDown(i)}
+                    disabled={i === session.exercises.length - 1}
+                    className="w-5 h-5 rounded bg-slate-100 hover:bg-slate-200 disabled:opacity-20 text-slate-600 flex items-center justify-center text-[10px]"
+                    title="下移"
+                  >
+                    <ArrowDown className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
           ))}
-        </motion.div>
-
-        {/* Start Button */}
-        <motion.button
-          initial={{ y: 15, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.45 }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={startWorkout}
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white font-extrabold text-lg shadow-xl shadow-orange-500/25 active:opacity-90 transition-all"
-        >
-          開始今日訓練 🔥
-        </motion.button>
-
-        <div className="flex items-center justify-center gap-4 mt-4 text-xs text-zinc-500">
-          <button
-            onClick={() => setShowHistoryModal(true)}
-            className="hover:text-zinc-300 flex items-center gap-1 transition-colors"
-          >
-            <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
-            <span>查看歷史趨勢圖</span>
-          </button>
-          <span>•</span>
-          <button
-            onClick={() => setShowProfileModal(true)}
-            className="hover:text-zinc-300 flex items-center gap-1 transition-colors"
-          >
-            <Activity className="w-3.5 h-3.5 text-orange-400" />
-            <span>身體生理指標</span>
-          </button>
         </div>
       </div>
 
+      {/* 3. Screen 1 Style: 「訓練計畫」分化推薦卡片 (腹部減脂 / 六塊腹肌 / 臀部) */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <span className="text-sm font-black text-slate-800">推薦訓練計畫</span>
+          <button
+            onClick={() => setShowPlanModal(true)}
+            className="text-xs text-[#00A87E] font-bold hover:underline flex items-center gap-0.5"
+          >
+            <span>全部計畫 ({WORKOUT_PLANS.length})</span>
+            <ChevronRight className="w-3 h-3" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2.5">
+          {WORKOUT_PLANS.slice(0, 4).map((plan) => {
+            const isSelected = plan.id === session.plan_id;
+            return (
+              <div
+                key={plan.id}
+                onClick={() => selectPlan(plan.id)}
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                  isSelected
+                    ? 'bg-emerald-50/80 border-[#00D09C] ring-2 ring-[#00D09C]/30 shadow-sm'
+                    : 'bg-white border-slate-200 hover:border-slate-300 shadow-sm'
+                }`}
+              >
+                {isSelected && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#00D09C]" />
+                )}
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                  {plan.categoryLabel}
+                </span>
+                <h4 className="text-xs font-bold text-slate-800 truncate mb-1">
+                  {plan.name.split('—')[0]}
+                </h4>
+                <p className="text-[10px] text-slate-500 line-clamp-1">
+                  {plan.targetFocus}
+                </p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Bottom Main Action Button */}
+      <div className="sticky bottom-20 z-20 pt-2">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={startWorkout}
+          className="w-full py-4 rounded-2xl bg-[#00D09C] hover:bg-[#00B887] text-white font-black text-lg shadow-xl shadow-emerald-500/30 flex items-center justify-center gap-2 transition-all"
+        >
+          <Play className="w-5 h-5 fill-white" />
+          <span>開始今日訓練 (第 4 天)</span>
+        </motion.button>
+      </div>
+
+      {/* Modals */}
       <PlanSelectorModal isOpen={showPlanModal} onClose={() => setShowPlanModal(false)} />
       <PlanEditorModal isOpen={showPlanEditorModal} onClose={() => setShowPlanEditorModal(false)} />
-    </motion.div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 // ============================================================
-// HoldOn Coach — Exercise Card (動作專注卡片)
-// 單一畫面專注單一動作，動態雙重漸進配重、關節保護光暈與語音波紋
+// HoldOn Coach — Exercise Focus Card (Screen 3: 訓練提示 - 30 Days Challenge Minimalist Clean Style)
+// 極簡白底大卡片、動態運動軌跡示範、醒目綠色目標計數、大圓形打勾按鈕與關節防護煞車
 // ============================================================
 
 'use client';
@@ -12,21 +12,22 @@ import {
   AlertTriangle,
   Mic,
   MicOff,
-  Dumbbell,
-  ArrowDownCircle,
-  Volume2,
-  Sparkles,
-  ArrowRight,
-  Layers,
+  Video,
+  ChevronLeft,
+  ChevronRight,
   RotateCcw,
   Edit3,
+  Layers,
+  ArrowDownCircle,
+  Sparkles,
+  Volume2,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useVoiceListener } from '@/hooks/useVoiceListener';
 import RPEInput from './RPEInput';
 import PainInput from './PainInput';
-import CoachBubble from './CoachBubble';
 import PlanEditorModal from './PlanEditorModal';
+import ExerciseIllustration from './ExerciseIllustration';
 
 export default function ExerciseCard() {
   const {
@@ -46,13 +47,15 @@ export default function ExerciseCard() {
     completeSet,
     dropWeightManually,
     processVoiceCommand,
+    resetSession,
   } = useWorkoutStore();
 
   const exercise = session.exercises[currentExerciseIndex];
   const [completedReps, setCompletedReps] = useState(exercise?.target_load.reps || 10);
   const [lastVoiceText, setLastVoiceText] = useState<string>('');
+  const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
 
-  // Synchronize stepper whenever set advances or target reps dynamically calibrate
+  // Synchronize stepper whenever set advances or target reps calibrate
   useEffect(() => {
     if (exercise?.target_load?.reps) {
       setCompletedReps(exercise.target_load.reps);
@@ -75,14 +78,7 @@ export default function ExerciseCard() {
 
   const progressPct = (currentSet / exercise.total_sets) * 100;
 
-  // Safety glow class: amber for Tier-1, red for Tier-2
-  const glowClass =
-    safetyTier === 2
-      ? 'ring-2 ring-red-500/80 shadow-[0_0_50px_rgba(239,68,68,0.25)]'
-      : safetyTier === 1
-        ? 'ring-2 ring-amber-500/80 shadow-[0_0_50px_rgba(245,158,11,0.25)]'
-        : 'ring-1 ring-zinc-800';
-
+  // Handle set completion trigger
   const handleComplete = () => {
     setShowRPEInput(true);
   };
@@ -91,43 +87,37 @@ export default function ExerciseCard() {
     completeSet(completedReps, rpe);
   };
 
-  return (
-    <div className="w-full flex flex-col pb-8">
-      {/* Top Header: Planned Exercises Switcher & Plan Edit Toolbar */}
-      <div className="px-3 pt-3 pb-1 max-w-xl mx-auto w-full">
-        {/* Actions bar */}
-        <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-[11px] font-bold text-zinc-400 flex items-center gap-1 shrink-0">
-              <Layers className="w-3.5 h-3.5 text-orange-400" />
-              <span>切換已計劃動作</span>
-            </span>
-            <span className="text-[10px] text-zinc-500 font-mono">
-              ({currentExerciseIndex + 1}/{session.exercises.length})
-            </span>
-          </div>
+  const isNeutral = safetyTier >= 1 || exercise.grip_type.includes('中立') || exercise.grip_type.includes('對握');
 
-          <div className="flex items-center gap-1.5 shrink-0">
+  return (
+    <div className="w-full max-w-xl mx-auto px-4 py-3 pb-24 text-slate-800 flex flex-col">
+      {/* 1. Top Exercise Pill Switcher Bar (Screen 4 inspired) */}
+      <div className="mb-2">
+        <div className="flex items-center justify-between gap-2 mb-1.5 px-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600">
+            <Layers className="w-3.5 h-3.5 text-[#00D09C]" />
+            <span>切換動作 ({currentExerciseIndex + 1}/{session.exercises.length})</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <button
               onClick={reverseExercisesOrder}
-              className="text-[11px] font-semibold text-zinc-300 hover:text-orange-400 bg-zinc-850 hover:bg-zinc-800 px-2 py-1 rounded-lg border border-zinc-700/60 flex items-center gap-1 transition-colors"
-              title="將動作次序前後完全調轉"
+              className="text-[11px] font-semibold text-slate-600 hover:text-[#00D09C] bg-white px-2 py-0.5 rounded-full border border-slate-200 shadow-sm flex items-center gap-1 transition-colors"
+              title="前後次序調轉"
             >
-              <RotateCcw className="w-3 h-3 text-orange-400" />
+              <RotateCcw className="w-3 h-3 text-[#00D09C]" />
               <span>前後調轉</span>
             </button>
-
             <button
               onClick={() => setShowPlanEditorModal(true)}
-              className="text-[11px] font-semibold text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-1 rounded-lg border border-orange-500/30 flex items-center gap-1 transition-colors"
+              className="text-[11px] font-semibold text-slate-700 hover:text-slate-900 bg-white px-2 py-0.5 rounded-full border border-slate-200 shadow-sm flex items-center gap-1 transition-colors"
             >
-              <Edit3 className="w-3 h-3" />
+              <Edit3 className="w-3 h-3 text-[#FF6B4A]" />
               <span>修改課表</span>
             </button>
           </div>
         </div>
 
-        {/* Horizontal Scrollable Pills for ALL planned exercises */}
+        {/* Scrollable Pills */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {session.exercises.map((ex, idx) => {
             const isCurrent = idx === currentExerciseIndex;
@@ -135,282 +125,259 @@ export default function ExerciseCard() {
               <button
                 key={`${ex.exercise_id}_${idx}`}
                 onClick={() => jumpToExercise(idx)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all shrink-0 ${
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                   isCurrent
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold shadow-md shadow-orange-500/25 ring-1 ring-orange-400'
-                    : 'bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 hover:text-white'
+                    ? 'bg-[#00D09C] text-white shadow-md shadow-emerald-500/25 ring-2 ring-emerald-300'
+                    : 'bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 shadow-sm'
                 }`}
               >
-                <span
-                  className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-mono font-bold ${
-                    isCurrent ? 'bg-black/30 text-white' : 'bg-zinc-700 text-zinc-400'
-                  }`}
-                >
+                <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                  isCurrent ? 'bg-white/25 text-white' : 'bg-slate-100 text-slate-500'
+                }`}>
                   {idx + 1}
                 </span>
-                <span className="font-medium">{ex.exercise_name}</span>
-                <span
-                  className={`text-[10px] font-mono ${
-                    isCurrent ? 'text-white/90' : 'text-zinc-500'
-                  }`}
-                >
+                <span>{ex.exercise_name}</span>
+                <span className={`text-[10px] ${isCurrent ? 'text-white/90' : 'text-slate-400'}`}>
                   {ex.target_load.weight_kg}kg
                 </span>
-                {isCurrent && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                )}
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Top Progress bar */}
-      <div className="px-4 pt-3 pb-2 max-w-xl mx-auto w-full">
-        <div className="flex items-center justify-between text-xs text-zinc-400 font-mono mb-1.5">
-          <span>
-            動作 {exercise.exercise_index + 1} / {exercise.total_exercises}：{exercise.exercise_name}
-          </span>
-          <span className="font-bold text-white">
-            第 {currentSet} / {exercise.total_sets} 組
-          </span>
-        </div>
-        <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+      {/* 2. Main Focus Card (Screen 3: 訓練提示 - Exact White Viewport Replica) */}
+      <div
+        className={`w-full bg-white rounded-3xl shadow-md border overflow-hidden transition-all duration-500 relative flex flex-col ${
+          safetyTier === 2
+            ? 'border-rose-400 ring-4 ring-rose-200'
+            : safetyTier === 1
+            ? 'border-amber-400 ring-4 ring-amber-200'
+            : 'border-slate-200/90'
+        }`}
+      >
+        {/* Progress Bar Line along the very top edge (Signature Screen 3 feature) */}
+        <div className="w-full h-1.5 bg-slate-100 overflow-hidden">
           <motion.div
-            className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full"
+            className="h-full bg-[#00D09C]"
             initial={{ width: 0 }}
             animate={{ width: `${progressPct}%` }}
             transition={{ type: 'spring', stiffness: 100 }}
           />
         </div>
-      </div>
 
-      {/* Main Focus Card */}
-      <div
-        className={`mx-3 sm:mx-auto max-w-xl w-full my-2 rounded-3xl bg-zinc-900/90 backdrop-blur-xl overflow-hidden transition-all duration-500 ${glowClass}`}
-      >
-        {/* Video / GIF Demo Area */}
-        <div className="relative aspect-[16/10] bg-zinc-950 overflow-hidden border-b border-zinc-800/80">
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 text-center">
+        {/* Card Header: Back Arrow, Set Indicator, Orange Camera Video Button */}
+        <div className="flex items-center justify-between px-5 pt-3 pb-1">
+          {/* Back button */}
+          <button
+            onClick={resetSession}
+            className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-700 transition-colors"
+            title="返回課表"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Set Tracker Pill */}
+          <div className="text-center">
+            <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider bg-slate-100 px-3 py-1 rounded-full">
+              第 {currentSet} / {exercise.total_sets} 組
+            </span>
+          </div>
+
+          {/* Orange Camera Video Button (Screen 3 Feature!) */}
+          <button
+            onClick={() => setShowVideoModal(!showVideoModal)}
+            className="w-9 h-9 rounded-full bg-[#FF6B4A] hover:bg-[#FF5530] text-white flex items-center justify-center shadow-md shadow-orange-500/30 transition-transform active:scale-95"
+            title="查看發力角度與示範"
+          >
+            <Video className="w-4 h-4 fill-white" />
+          </button>
+        </div>
+
+        {/* Safety Intervention Notice (if active) */}
+        <AnimatePresence>
+          {safetyTier === 1 && (
             <motion.div
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: 'easeInOut' }}
-              className="w-14 h-14 rounded-2xl bg-zinc-800/80 border border-zinc-700/60 flex items-center justify-center mb-3 shadow-inner"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-amber-50 border-y border-amber-200 px-4 py-2 flex items-center gap-2 text-amber-800 text-xs font-bold"
             >
-              <Dumbbell className="w-7 h-7 text-orange-400" />
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>⚠️ Tier-1 關節防護：更換為對握中立握法，重量下調 20%！</span>
             </motion.div>
-            <p className="text-sm font-bold text-zinc-200">{exercise.media.alt_text}</p>
-            <p className="text-xs text-zinc-500 mt-1">示範動態影像載入中 (gymvisual)</p>
-          </div>
+          )}
+          {safetyTier === 2 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-rose-50 border-y border-rose-200 px-4 py-2 flex items-center gap-2 text-rose-800 text-xs font-bold"
+            >
+              <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>🛑 Tier-2 強制換機：已自動切換為坐姿機械式胸推機固定軌跡保護！</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Safety Status Badges */}
-          <AnimatePresence>
-            {safetyTier === 1 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500 text-zinc-950 flex items-center gap-1.5 shadow-lg shadow-amber-500/30"
-              >
-                <span>⚠️ Tier-1 防護：對握中立握法 (-20% 配重)</span>
-              </motion.div>
-            )}
-            {safetyTier === 2 && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: -10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0 }}
-                className="absolute top-3 left-3 px-3 py-1.5 rounded-full text-xs font-bold bg-red-500 text-white flex items-center gap-1.5 shadow-lg shadow-red-500/30"
-              >
-                <span>🛑 Tier-2 防護：已直接抽換為坐姿機械式胸推機</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        {/* Central Visual Demonstration Area (Motion Trajectory with Blue Arrows) */}
+        <div className="relative w-full h-52 bg-slate-50/60 border-b border-slate-100 flex items-center justify-center px-4 overflow-hidden">
+          <ExerciseIllustration
+            exerciseId={exercise.exercise_id}
+            exerciseName={exercise.exercise_name}
+            isNeutralGrip={isNeutral}
+            className="w-full h-full"
+          />
 
-          {/* Grip Badge */}
-          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full text-xs font-medium bg-zinc-900/85 backdrop-blur-md text-zinc-300 border border-zinc-700/60">
-            {exercise.grip_type}
-          </div>
-
-          {/* Biomechanical Cue Overlay */}
-          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent p-3.5 pt-8">
-            <p className="text-xs text-amber-300 font-medium flex items-center gap-1.5">
-              <span>💡 力學口訣：</span>
-              <span>{exercise.media.cue}</span>
-            </p>
+          {/* Biomechanical Form Cue Badge */}
+          <div className="absolute bottom-2 inset-x-4 flex justify-center">
+            <span className="bg-white/90 backdrop-blur-sm border border-slate-200/80 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full shadow-sm">
+              💡 {exercise.media.cue}
+            </span>
           </div>
         </div>
 
-        {/* Card Body */}
-        <div className="p-5 flex flex-col gap-3.5">
-          {/* Dynamic Adjustment Alert Banner */}
-          {lastAdjustment && (
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className={`rounded-2xl p-3 border flex items-start gap-2.5 text-xs shadow-md ${
-                lastAdjustment.type === 'weight_drop'
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-200'
-                  : lastAdjustment.type === 'weight_up'
-                  ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200'
-                  : 'bg-orange-500/15 border-orange-500/40 text-orange-200'
-              }`}
-            >
-              <Sparkles className="w-4 h-4 shrink-0 text-orange-400 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <span className="font-bold block text-white">✨ AI 教練動態配重調配生效：</span>
-                <span className="text-[11px] opacity-90 block mt-0.5">{lastAdjustment.summary}</span>
-              </div>
-            </motion.div>
-          )}
-
-          {/* Exercise Title & Fast Drop Button */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-black text-white tracking-tight">
-                {exercise.exercise_name}
-              </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                目標：肌肥大黃金次數 8–12 Reps • 滿 12 下自動解鎖
-              </p>
+        {/* Dynamic Calibration Banner (Double Progression RPE Result) */}
+        {lastAdjustment && (
+          <div className="px-5 pt-3">
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl px-3 py-2 text-xs flex items-center gap-2">
+              <Sparkles className="w-3.5 h-3.5 text-[#00D09C] shrink-0" />
+              <span className="font-semibold">{lastAdjustment.summary}</span>
             </div>
+          </div>
+        )}
 
-            <button
-              onClick={() => dropWeightManually('手動降重')}
-              className="text-xs text-orange-400 hover:text-orange-300 bg-orange-500/10 hover:bg-orange-500/20 px-2.5 py-1.5 rounded-xl border border-orange-500/30 flex items-center gap-1 transition-all"
-              title="覺得有點硬？點此手動降一檔重量"
-            >
-              <ArrowDownCircle className="w-3.5 h-3.5" />
-              <span>有點硬？降重</span>
-            </button>
+        {/* Exercise Name & Big Mint Green Count (Signature Screen 3 Style) */}
+        <div className="p-5 text-center flex flex-col items-center">
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-1">
+            {exercise.exercise_name}
+          </h2>
+
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
+              {exercise.grip_type}
+            </span>
+            <span className="text-xs text-slate-400">
+              • 目標推滿 12 下解鎖升重
+            </span>
           </div>
 
-          {/* Weight × Reps Display */}
-          <div className="bg-zinc-950/60 border border-zinc-800/80 rounded-2xl p-5 text-center relative overflow-hidden">
-            <div className="flex items-center justify-center gap-4">
-              <div>
-                <motion.span
-                  key={exercise.target_load.weight_kg}
-                  initial={{ scale: 1.2, color: '#f97316' }}
-                  animate={{ scale: 1, color: '#ffffff' }}
-                  transition={{ duration: 0.3 }}
-                  className="text-5xl font-black tabular-nums tracking-tight block"
-                >
-                  {exercise.target_load.weight_kg}
-                </motion.span>
-                <span className="text-xs text-zinc-400 block -mt-1 font-light">kg 目標配重</span>
-              </div>
-
-              <span className="text-2xl text-zinc-600 font-light">×</span>
-
-              <div>
-                <motion.span
-                  key={exercise.target_load.reps}
-                  initial={{ scale: 1.2, color: '#f97316' }}
-                  animate={{ scale: 1, color: '#fb923c' }}
-                  transition={{ duration: 0.3 }}
-                  className="text-4xl font-extrabold tabular-nums block"
-                >
-                  {exercise.target_load.reps}
-                </motion.span>
-                <span className="text-xs text-zinc-400 block -mt-1 font-light">下 目標次數</span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-zinc-500 mt-3">
-              規則：{exercise.target_load.rule}
+          {/* HUGE VIBRANT GREEN TARGET LOAD DISPLAY (Screen 3: 'x 12' / '16kg × 12') */}
+          <div className="my-2">
+            <motion.div
+              key={`${exercise.target_load.weight_kg}_${exercise.target_load.reps}`}
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              className="text-[#00D09C] font-black text-4xl sm:text-5xl tracking-tight tabular-nums flex items-baseline justify-center gap-2"
+            >
+              <span>{exercise.target_load.weight_kg}kg</span>
+              <span className="text-2xl text-slate-300 font-light">×</span>
+              <span>{exercise.target_load.reps}</span>
+            </motion.div>
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
+              目標配重與次數
             </p>
           </div>
 
-          {/* Actual Rep Counter Stepper */}
-          <div className="flex items-center justify-center gap-4 py-1">
+          {/* Actual Reps Stepper Counter */}
+          <div className="flex items-center gap-3 mt-2 mb-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-1.5 px-3">
             <button
               onClick={() => setCompletedReps(Math.max(1, completedReps - 1))}
-              className="w-11 h-11 rounded-2xl bg-zinc-800 text-zinc-300 text-xl font-bold flex items-center justify-center active:bg-zinc-700 transition-colors border border-zinc-700/60"
+              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all"
             >
               −
             </button>
-            <div className="text-center min-w-[100px]">
-              <span className="text-xs text-zinc-500">實際完成次數</span>
-              <p className="text-3xl font-black text-white tabular-nums">
-                {completedReps} <span className="text-xs font-normal text-zinc-400">下</span>
-              </p>
+            <div className="px-2 text-center">
+              <span className="text-[10px] text-slate-400 block font-medium">實際完成</span>
+              <span className="text-lg font-black text-slate-800 tabular-nums">
+                {completedReps} <span className="text-xs font-normal text-slate-500">下</span>
+              </span>
             </div>
             <button
-              onClick={() => setCompletedReps(Math.min(25, completedReps + 1))}
-              className="w-11 h-11 rounded-2xl bg-zinc-800 text-zinc-300 text-xl font-bold flex items-center justify-center active:bg-zinc-700 transition-colors border border-zinc-700/60"
+              onClick={() => setCompletedReps(Math.min(30, completedReps + 1))}
+              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all"
             >
               +
             </button>
           </div>
 
-          {/* Coach Bubble */}
-          <CoachBubble
-            text={session.coach_feedback.speech_text}
-            tone={session.coach_feedback.tone}
-          />
-
-          {/* Voice Prompt Cue */}
-          <div className="flex items-center justify-between px-2 text-[11px] text-zinc-500">
-            <span className="flex items-center gap-1">
-              <Mic className="w-3 h-3 text-orange-400" />
-              <span>語音可說：「推完了」、「有點硬」、「肩膀痛」、「再休30秒」</span>
-            </span>
-            {lastVoiceText && (
-              <span className="text-amber-400 font-medium truncate max-w-[120px]">
-                聽到: &quot;{lastVoiceText}&quot;
-              </span>
-            )}
-          </div>
-
-          {/* Primary Action Buttons */}
-          <div className="flex gap-2.5 pt-1">
-            {/* Pain Alert Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowPainInput(true)}
-              className="w-14 h-14 rounded-2xl bg-amber-500/15 border border-amber-500/40 flex flex-col items-center justify-center text-amber-400 hover:bg-amber-500/25 transition-colors shrink-0"
-              title="回報關節刺痛或卡卡"
+          {/* 3. Bottom Controls: < [BIG GREEN CHECKMARK BUTTON] > (Exact Screen 3 Replica!) */}
+          <div className="w-full flex items-center justify-center gap-8 pt-2 pb-1">
+            {/* Previous set arrow */}
+            <button
+              onClick={() => setCompletedReps(Math.max(1, completedReps - 1))}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
+              title="調降次數"
             >
-              <AlertTriangle className="w-5 h-5 mb-0.5" />
-              <span className="text-[10px] font-bold">痛感</span>
-            </motion.button>
+              <ChevronLeft className="w-7 h-7" />
+            </button>
 
-            {/* Complete Set Button */}
+            {/* BIG VIBRANT GREEN ROUND CHECKMARK BUTTON */}
             <motion.button
-              whileTap={{ scale: 0.97 }}
+              whileHover={{ scale: 1.06 }}
+              whileTap={{ scale: 0.92 }}
               onClick={handleComplete}
-              className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-500 text-white font-extrabold text-base flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:opacity-90 transition-all"
+              className="w-20 h-20 rounded-full bg-[#00D09C] hover:bg-[#00B887] text-white shadow-xl shadow-emerald-500/35 flex items-center justify-center transition-all cursor-pointer"
+              title="完成當前組數"
             >
-              <Check className="w-5 h-5" />
-              <span>完成第 {currentSet} 組（選 RPE 調整）</span>
+              <Check className="w-10 h-10 stroke-[3]" />
             </motion.button>
 
-            {/* Voice Toggle Button */}
-            <motion.button
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleVoice}
-              className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center transition-all shrink-0 ${
-                isListening
-                  ? 'bg-orange-500/25 border-orange-500 text-orange-400 ring-2 ring-orange-500/40'
-                  : 'bg-zinc-800 border-zinc-700 text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="切換常駐語音辨識"
+            {/* Next set arrow */}
+            <button
+              onClick={() => setCompletedReps(Math.min(30, completedReps + 1))}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
+              title="提高次數"
             >
-              {isListening ? (
-                <motion.div
-                  animate={{ scale: [1, 1.25, 1] }}
-                  transition={{ repeat: Infinity, duration: 1.4 }}
-                >
-                  <Mic className="w-5 h-5 mb-0.5" />
-                </motion.div>
-              ) : (
-                <MicOff className="w-5 h-5 mb-0.5" />
-              )}
-              <span className="text-[10px] font-bold">{isListening ? '監聽中' : '語音'}</span>
-            </motion.button>
+              <ChevronRight className="w-7 h-7" />
+            </button>
           </div>
         </div>
+
+        {/* 4. HoldOn Coach Smart Safety Safeguards (Clean Minimalist Pills) */}
+        <div className="px-5 pb-5 pt-1 border-t border-slate-100 flex items-center justify-between gap-2">
+          {/* Pain Alert Button */}
+          <button
+            onClick={() => setShowPainInput(true)}
+            className="flex-1 py-2 px-3 rounded-full bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+            <span>⚠️ 痛感煞車</span>
+          </button>
+
+          {/* Manual Drop Weight Button */}
+          <button
+            onClick={() => dropWeightManually('手動回報有點硬')}
+            className="flex-1 py-2 px-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <ArrowDownCircle className="w-3.5 h-3.5 text-[#FF6B4A]" />
+            <span>有點硬 降重</span>
+          </button>
+
+          {/* Voice Listener Button */}
+          <button
+            onClick={toggleVoice}
+            className={`py-2 px-3 rounded-full border text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
+              isListening
+                ? 'bg-emerald-500 border-emerald-500 text-white animate-pulse'
+                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}
+            title="語音喊「推完了」、「有點硬」、「痛」"
+          >
+            {isListening ? <Mic className="w-3.5 h-3.5" /> : <MicOff className="w-3.5 h-3.5" />}
+            <span>{isListening ? '監聽中' : '語音'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Voice Prompt Helper Hint */}
+      <div className="mt-3 text-center text-xs text-slate-400 flex items-center justify-center gap-1">
+        <span>🎙️ 語音可直接喊：「推完了」、「有點硬」、「肩膀痛」、「再休30秒」</span>
+        {lastVoiceText && (
+          <span className="text-[#00D09C] font-semibold ml-1">
+            (聽到: &quot;{lastVoiceText}&quot;)
+          </span>
+        )}
       </div>
 
       {/* RPE & Pain Overlays */}

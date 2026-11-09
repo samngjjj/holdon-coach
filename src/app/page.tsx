@@ -35,7 +35,7 @@ export default function Home() {
   const isWorkoutCompleted = showSummary || session.current_state === 'COMPLETED';
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white flex flex-col selection:bg-orange-500/30">
+    <main className="min-h-screen bg-[#F1F5F9] text-slate-900 flex flex-col selection:bg-[#00D09C]/30 pb-16">
       {/* Top Navbar */}
       <TopNavbar
         onToggleDemoBar={() => setShowDemoBar((prev) => !prev)}

@@ -1,6 +1,5 @@
 // ============================================================
-// HoldOn Coach — Dedicated AI Coach Chat View (專屬 AI 隨身教練對話分頁)
-// 只讀取個人的身體素質、訓練狀況與飲食狀況，提供精準擬真的健身解答
+// HoldOn Coach — Dedicated AI Coach Chat View (Clean Minimalist White Theme)
 // ============================================================
 
 'use client';
@@ -12,10 +11,6 @@ import {
   Sparkles,
   Bot,
   User,
-  Shield,
-  Activity,
-  Flame,
-  Utensils,
   Dumbbell,
   RotateCcw,
 } from 'lucide-react';
@@ -44,8 +39,6 @@ export default function AICoachChatView() {
     session,
     dietRecord,
     totalVolumeKg,
-    currentSet,
-    safetyTier,
     setActiveTab,
     showPlanEditorModal,
     setShowPlanEditorModal,
@@ -63,7 +56,6 @@ export default function AICoachChatView() {
     ...dietRecord.meals.dinner,
     ...dietRecord.meals.snack,
   ];
-  const consumedCalories = allMeals.reduce((s, m) => s + m.calories, 0);
   const consumedProtein = allMeals.reduce((s, m) => s + m.protein_g, 0);
   const proteinDeficit = Math.max(0, dietRecord.targetProtein - consumedProtein);
 
@@ -87,17 +79,17 @@ export default function AICoachChatView() {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto flex flex-col h-[calc(100vh-120px)] sm:h-[calc(100vh-130px)] px-3 pb-24 text-white">
+    <div className="w-full max-w-xl mx-auto flex flex-col h-[calc(100vh-130px)] px-3 pb-24 text-slate-800">
       {/* Real-time Context Banner: AI strictly reads user parameters */}
-      <div className="bg-zinc-900/95 border border-zinc-800 rounded-2xl p-3 mb-3 shadow-md shrink-0">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-3 mb-3 shadow-sm shrink-0">
         <div className="flex items-center justify-between mb-1.5">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-orange-400">
-            <Sparkles className="w-3.5 h-3.5 text-orange-400" />
+          <div className="flex items-center gap-1.5 text-xs font-bold text-[#00A87E]">
+            <Sparkles className="w-3.5 h-3.5 text-[#00D09C]" />
             <span>AI 隨身教練即時讀取個人數據中</span>
           </div>
           <button
             onClick={clearChat}
-            className="text-[10px] text-zinc-500 hover:text-zinc-400 flex items-center gap-1"
+            className="text-[10px] text-slate-400 hover:text-slate-600 flex items-center gap-1"
             title="重設對話紀錄"
           >
             <RotateCcw className="w-3 h-3" />
@@ -106,23 +98,23 @@ export default function AICoachChatView() {
         </div>
 
         <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-          <div className="bg-zinc-800/60 p-1.5 rounded-xl border border-zinc-700/40">
-            <span className="text-zinc-500 block">👤 身體素質</span>
-            <span className="font-bold text-white block truncate">
+          <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+            <span className="text-slate-400 block font-medium">👤 身體素質</span>
+            <span className="font-bold text-slate-800 block truncate">
               {userProfile.weight_kg}kg • BF {userProfile.body_fat_pct || 16.5}%
             </span>
           </div>
 
-          <div className="bg-zinc-800/60 p-1.5 rounded-xl border border-zinc-700/40">
-            <span className="text-zinc-500 block">🏋️ 當日訓練</span>
-            <span className="font-bold text-orange-400 block truncate">
+          <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+            <span className="text-slate-400 block font-medium">🏋️ 當日訓練</span>
+            <span className="font-bold text-[#FF6B4A] block truncate">
               {totalVolumeKg > 0 ? `${totalVolumeKg}kg` : '744kg'} • {session.exercises[0]?.target_load.weight_kg}kg
             </span>
           </div>
 
-          <div className="bg-zinc-800/60 p-1.5 rounded-xl border border-zinc-700/40">
-            <span className="text-zinc-500 block">🥗 今日飲食缺口</span>
-            <span className="font-bold text-emerald-400 block truncate">
+          <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100">
+            <span className="text-slate-400 block font-medium">🥗 今日飲食缺口</span>
+            <span className="font-bold text-[#00A87E] block truncate">
               {proteinDeficit > 0 ? `缺 ${proteinDeficit}g 蛋白` : '蛋白質已達標'}
             </span>
           </div>
@@ -130,53 +122,53 @@ export default function AICoachChatView() {
       </div>
 
       {/* Chat Messages List */}
-      <div className="flex-1 overflow-y-auto space-y-3.5 pr-1">
+      <div className="flex-1 overflow-y-auto space-y-3 pr-1">
         {chatMessages.map((msg) => {
           const isUser = msg.role === 'user';
 
           return (
             <motion.div
               key={msg.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               className={`flex gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
             >
               {!isUser && (
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white shrink-0 shadow-md">
+                <div className="w-8 h-8 rounded-full bg-[#00D09C] flex items-center justify-center text-white shrink-0 shadow-sm">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
 
               <div
-                className={`max-w-[85%] sm:max-w-[78%] rounded-3xl p-4 text-xs sm:text-sm leading-relaxed shadow-md ${
+                className={`max-w-[85%] sm:max-w-[80%] rounded-3xl p-4 text-xs sm:text-sm leading-relaxed shadow-sm ${
                   isUser
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-tr-none'
-                    : 'bg-zinc-900 border border-zinc-800 text-zinc-200 rounded-tl-none whitespace-pre-wrap'
+                    ? 'bg-[#00D09C] text-white rounded-tr-none font-medium'
+                    : 'bg-white border border-slate-200 text-slate-800 rounded-tl-none whitespace-pre-wrap'
                 }`}
               >
                 {msg.content}
 
                 {/* AI Plan Modification Execution Badge */}
                 {msg.actionBadge && (
-                  <div className="mt-3.5 p-3 rounded-2xl bg-zinc-950/90 border border-orange-500/40 shadow-inner text-left">
-                    <div className="flex items-center gap-1.5 mb-1.5 text-orange-400 font-bold text-xs">
+                  <div className="mt-3 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-left">
+                    <div className="flex items-center gap-1.5 mb-1 text-[#00A87E] font-bold text-xs">
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>AI 教練已動態更新訓練課表！</span>
                     </div>
-                    <p className="text-[11px] text-zinc-300 mb-2.5">
+                    <p className="text-[11px] text-slate-700 mb-2">
                       {msg.actionBadge.description}
                     </p>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => setActiveTab('workout')}
-                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs hover:opacity-90 flex items-center gap-1 transition-all shadow"
+                        className="px-3 py-1.5 rounded-xl bg-[#00D09C] hover:bg-[#00B887] text-white font-bold text-xs flex items-center gap-1 transition-all shadow-sm"
                       >
                         <Dumbbell className="w-3 h-3" />
                         <span>前往訓練動作</span>
                       </button>
                       <button
                         onClick={() => setShowPlanEditorModal(true)}
-                        className="px-3 py-1.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-semibold flex items-center gap-1 border border-zinc-700 transition-colors"
+                        className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center gap-1 border border-slate-200 shadow-xs"
                       >
                         <span>檢視/微調課表</span>
                       </button>
@@ -186,7 +178,7 @@ export default function AICoachChatView() {
               </div>
 
               {isUser && (
-                <div className="w-8 h-8 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-orange-400 shrink-0 font-bold text-xs">
+                <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 font-bold text-xs">
                   {userProfile.name.slice(0, 1).toUpperCase()}
                 </div>
               )}
@@ -196,11 +188,11 @@ export default function AICoachChatView() {
 
         {/* Typing indicator */}
         {isGeneratingResponse && (
-          <div className="flex items-center gap-2 text-zinc-500 text-xs py-2 pl-10">
-            <div className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" />
-            <div className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:0.2s]" />
-            <div className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:0.4s]" />
-            <span className="text-[11px] text-zinc-400">教練正在讀取你的訓練與飲食數據分析中...</span>
+          <div className="flex items-center gap-2 text-slate-400 text-xs py-2 pl-10">
+            <div className="w-2 h-2 rounded-full bg-[#00D09C] animate-bounce" />
+            <div className="w-2 h-2 rounded-full bg-[#00D09C] animate-bounce [animation-delay:0.2s]" />
+            <div className="w-2 h-2 rounded-full bg-[#00D09C] animate-bounce [animation-delay:0.4s]" />
+            <span className="text-[11px] text-slate-500 font-medium">教練正在為你分析個人訓練數據中...</span>
           </div>
         )}
 
@@ -213,7 +205,7 @@ export default function AICoachChatView() {
           <button
             key={idx}
             onClick={() => handleSend(s)}
-            className="px-2.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-300 whitespace-nowrap transition-colors"
+            className="px-2.5 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-600 whitespace-nowrap shadow-xs transition-colors"
           >
             {s}
           </button>
@@ -222,20 +214,20 @@ export default function AICoachChatView() {
 
       {/* Input Form */}
       <div className="shrink-0 pt-1">
-        <div className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 focus-within:border-orange-500/80 rounded-2xl px-3 py-2 shadow-xl">
+        <div className="flex items-center gap-2 bg-white border border-slate-200 focus-within:border-[#00D09C] rounded-2xl px-3 py-2 shadow-sm">
           <input
             type="text"
-            placeholder="詢問有關你個人的訓練、飲食、配重或肩膀問題..."
+            placeholder="詢問有關你的訓練、飲食、配重或肩膀問題..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isGeneratingResponse}
-            className="flex-1 bg-transparent text-xs sm:text-sm text-white placeholder:text-zinc-500 focus:outline-none disabled:opacity-50"
+            className="flex-1 bg-transparent text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none disabled:opacity-50"
           />
           <button
             onClick={() => handleSend()}
             disabled={!input.trim() || isGeneratingResponse}
-            className="w-8 h-8 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-40 text-white flex items-center justify-center transition-colors shrink-0"
+            className="w-8 h-8 rounded-xl bg-[#00D09C] hover:bg-[#00B887] disabled:opacity-40 text-white flex items-center justify-center transition-colors shrink-0 shadow-xs"
           >
             <Send className="w-3.5 h-3.5" />
           </button>
