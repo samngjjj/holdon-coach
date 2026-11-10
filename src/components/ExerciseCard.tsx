@@ -33,6 +33,7 @@ import PainInput from './PainInput';
 import PlanEditorModal from './PlanEditorModal';
 import ExerciseIllustration from './ExerciseIllustration';
 import ChangeNotificationBanner from './ChangeNotificationBanner';
+import ExerciseFormGuideModal from './ExerciseFormGuideModal';
 
 export default function ExerciseCard() {
   const {
@@ -384,17 +385,18 @@ export default function ExerciseCard() {
         </div>
 
         {/* Central Visual Demonstration Area (Motion Trajectory with Blue Arrows) */}
-        <div className="relative w-full h-52 bg-slate-50/60 border-b border-slate-100 flex items-center justify-center px-4 overflow-hidden">
+        <div className="relative w-full h-56 bg-slate-50/70 border-b border-slate-100 flex items-center justify-center px-2 overflow-hidden">
           <ExerciseIllustration
             exerciseId={exercise.exercise_id}
             exerciseName={exercise.exercise_name}
             isNeutralGrip={isNeutral}
+            onOpenGuide={() => setShowVideoModal(true)}
             className="w-full h-full"
           />
 
           {/* Biomechanical Form Cue Badge */}
-          <div className="absolute bottom-2 inset-x-4 flex justify-center">
-            <span className="bg-white/90 backdrop-blur-sm border border-slate-200/80 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full shadow-sm">
+          <div className="absolute bottom-2 inset-x-4 flex justify-center pointer-events-none">
+            <span className="bg-white/95 backdrop-blur-md border border-slate-200/90 text-slate-700 text-[11px] font-semibold px-3 py-1 rounded-full shadow-sm">
               💡 {exercise.media.cue}
             </span>
           </div>
@@ -864,6 +866,17 @@ export default function ExerciseCard() {
       <PlanEditorModal
         isOpen={showPlanEditorModal}
         onClose={() => setShowPlanEditorModal(false)}
+      />
+
+      {/* Exercise Form & Technique Breakdown Guide Modal */}
+      <ExerciseFormGuideModal
+        isOpen={showVideoModal}
+        onClose={() => setShowVideoModal(false)}
+        exerciseId={exercise.exercise_id}
+        exerciseName={exercise.exercise_name}
+        gripType={exercise.grip_type}
+        cue={exercise.media.cue}
+        isNeutralGrip={isNeutral}
       />
     </div>
   );
