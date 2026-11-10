@@ -1,6 +1,7 @@
 // ============================================================
 // HoldOn Coach — Shareable PR & Workout Card Modal (Instagram / Threads 戰績卡)
-// Spotify Wrapped / Strava 高顏值極簡黑綠配色，一鍵複製社群分享文案與儲存戰績圖
+// 參考 Hevy 頂級設計：支援 PR 數據卡與「每月鍛鍊打卡月曆 (Monthly Consistency Calendar)」雙卡切換
+// 包含 Confetti 慶祝、五大社群快捷分享按鈕與原生 Canvas 高解析度匯出
 // ============================================================
 
 'use client';
@@ -20,6 +21,8 @@ import {
   TrendingUp,
   Award,
   Zap,
+  Calendar,
+  Layers,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 
@@ -34,6 +37,7 @@ export default function ShareablePRCardModal() {
     dietRecord,
   } = useWorkoutStore();
 
+  const [activeSlide, setActiveSlide] = useState<'pr' | 'calendar'>('pr');
   const [copied, setCopied] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -53,6 +57,9 @@ export default function ShareablePRCardModal() {
     day: 'numeric',
   });
 
+  // Simulated active workout days for monthly consistency calendar (Hevy Image 5 style)
+  const trainedDaysInMonth = [1, 4, 6, 8, 11, 13, 15, 18, 20, 22, 27, 28];
+
   // High-energy formatted brag text for Instagram Story / Threads / FB
   const shareText = `🏆 【HoldOn Coach 今日戰績結算】
 🔥 訓練課表：${session.plan_name}
@@ -70,7 +77,6 @@ export default function ShareablePRCardModal() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
-      // Fallback
       const textArea = document.createElement('textarea');
       textArea.value = shareText;
       document.body.appendChild(textArea);
@@ -98,58 +104,52 @@ export default function ShareablePRCardModal() {
 
   const handleDownloadCard = () => {
     setDownloading(true);
-    // Draw canvas image and download
     const canvas = document.createElement('canvas');
     canvas.width = 1080;
-    canvas.height = 1440; // 3:4 High-res Instagram aspect ratio
+    canvas.height = 1350;
     const ctx = canvas.getContext('2d');
-
     if (!ctx) {
       setDownloading(false);
       return;
     }
 
     // Background gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, 1080, 1440);
-    bgGrad.addColorStop(0, '#0B132B');
-    bgGrad.addColorStop(0.5, '#0E1A38');
-    bgGrad.addColorStop(1, '#060B18');
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, 1080, 1440);
+    const grad = ctx.createLinearGradient(0, 0, 1080, 1350);
+    grad.addColorStop(0, '#070D1E');
+    grad.addColorStop(0.5, '#0B132B');
+    grad.addColorStop(1, '#070D1E');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1350);
 
-    // Subtle mint glow circle
-    const glowGrad = ctx.createRadialGradient(540, 360, 50, 540, 360, 480);
-    glowGrad.addColorStop(0, 'rgba(0, 208, 156, 0.15)');
-    glowGrad.addColorStop(1, 'rgba(0, 208, 156, 0)');
-    ctx.fillStyle = glowGrad;
-    ctx.fillRect(0, 0, 1080, 1440);
+    // Decorative radial circles
+    ctx.fillStyle = 'rgba(0, 208, 156, 0.08)';
+    ctx.beginPath();
+    ctx.arc(150, 200, 350, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Decorative border
-    ctx.strokeStyle = '#00D09C';
-    ctx.lineWidth = 6;
-    ctx.strokeRect(50, 50, 980, 1340);
-
-    // Header Tag
+    // Top Brand Tag
     ctx.fillStyle = '#00D09C';
     ctx.font = 'bold 32px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('HOLDON COACH • 30日科學肌肥大認證', 540, 130);
+    ctx.textAlign = 'left';
+    ctx.fillText('⚡ HOLDON COACH', 100, 120);
 
     ctx.fillStyle = '#94A3B8';
     ctx.font = '24px sans-serif';
-    ctx.fillText(`${todayStr} • ${session.plan_name.split('—')[0]}`, 540, 175);
+    ctx.textAlign = 'right';
+    ctx.fillText(todayStr, 980, 120);
 
-    // Trophy Icon Emoji
-    ctx.font = '80px sans-serif';
-    ctx.fillText('🏆', 540, 290);
-
-    // Main Headline
+    // Main Trophy & PR
     ctx.fillStyle = '#FFFFFF';
-    ctx.font = 'bold 54px sans-serif';
-    ctx.fillText('雙重漸進正式突破新 PR！', 540, 380);
+    ctx.font = '900 68px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('PR 破紀錄達成！', 540, 280);
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '32px sans-serif';
+    ctx.fillText(session.plan_name.split('—')[0], 540, 340);
 
     ctx.fillStyle = '#00D09C';
-    ctx.font = 'bold 36px sans-serif';
+    ctx.font = 'bold 40px sans-serif';
     ctx.fillText(`解鎖 ${maxWeight} kg 新負重里程碑`, 540, 435);
 
     // Metric Box 1: Total Volume
@@ -235,7 +235,6 @@ export default function ShareablePRCardModal() {
     ctx.textAlign = 'right';
     ctx.fillText('HOLDON-COACH', 960, 1260);
 
-    // Trigger download
     const dataUrl = canvas.toDataURL('image/png');
     const a = document.createElement('a');
     a.href = dataUrl;
@@ -250,7 +249,7 @@ export default function ShareablePRCardModal() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto"
+        className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
         onClick={() => setShowShareCardModal(false)}
       >
         <motion.div
@@ -259,31 +258,62 @@ export default function ShareablePRCardModal() {
           exit={{ scale: 0.9, y: 25 }}
           transition={{ type: 'spring', stiffness: 350, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-sm sm:max-w-md my-6 flex flex-col items-center"
+          className="w-full max-w-sm sm:max-w-md my-4 flex flex-col items-center"
         >
+          {/* Top Celebration Header (Hevy Image 5 style) */}
+          <div className="text-center mb-3">
+            <span className="text-2xl animate-bounce inline-block">🎉</span>
+            <h3 className="text-lg font-black text-white">練得太棒了，{userProfile.name}！</h3>
+            <p className="text-xs text-slate-400">這是您本月完成的第 12 場高質量訓練</p>
+          </div>
+
           {/* Close button */}
-          <div className="w-full flex justify-end mb-2">
+          <div className="w-full flex justify-end mb-1">
             <button
               onClick={() => setShowShareCardModal(false)}
-              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
+          {/* Card Slide Switcher: PR Card vs Consistency Calendar */}
+          <div className="flex items-center gap-2 mb-3 bg-[#132042] p-1 rounded-2xl border border-slate-700/60 text-xs">
+            <button
+              onClick={() => setActiveSlide('pr')}
+              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                activeSlide === 'pr'
+                  ? 'bg-[#00D09C] text-slate-950 font-black shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              🏆 今日 PR 戰績
+            </button>
+            <button
+              onClick={() => setActiveSlide('calendar')}
+              className={`px-3 py-1 rounded-xl font-bold transition-all cursor-pointer ${
+                activeSlide === 'calendar'
+                  ? 'bg-[#00D09C] text-slate-950 font-black shadow-sm'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              📅 本月打卡日曆 (Hevy)
+            </button>
+          </div>
+
           {/* ============================================================ */}
-          {/* THE CARD (Instagram Story / Strava Style) */}
+          {/* THE CARD */}
           {/* ============================================================ */}
           <div
             ref={cardRef}
-            className="w-full bg-[#0B132B] rounded-3xl p-6 border border-[#00D09C]/40 shadow-2xl relative overflow-hidden text-white"
+            className="w-full bg-[#0B132B] rounded-3xl p-5 sm:p-6 border border-[#00D09C]/40 shadow-2xl relative overflow-hidden text-white"
           >
             {/* Background glow radial */}
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#00D09C]/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#FF6B4A]/15 rounded-full blur-3xl pointer-events-none" />
 
             {/* Top Brand Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-white/10 relative z-10">
+            <div className="flex items-center justify-between pb-3 border-b border-white/10 relative z-10">
               <div className="flex items-center gap-2">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#00D09C] animate-pulse" />
                 <span className="text-xs font-black tracking-widest text-[#00D09C] uppercase">
@@ -293,89 +323,139 @@ export default function ShareablePRCardModal() {
               <span className="text-[11px] text-slate-400 font-medium">{todayStr}</span>
             </div>
 
-            {/* Hero PR Trophy Icon & Title */}
-            <div className="text-center py-5 relative z-10">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-[#FF6B4A] shadow-lg shadow-orange-500/30 mb-3 text-white">
-                <Trophy className="w-8 h-8" />
-              </div>
-              <div className="inline-block px-3 py-0.5 rounded-full bg-[#00D09C]/15 border border-[#00D09C]/30 text-[#00D09C] text-xs font-black mb-1.5">
-                🏆 雙重漸進正式突破新 PR！
-              </div>
-              <h2 className="text-2xl font-black text-white tracking-tight">
-                解鎖 {maxWeight}kg 負重里程碑
-              </h2>
-              <p className="text-xs text-slate-300 mt-1">
-                {session.plan_name.split('—')[0]} • 恪守「滿 12 下才升重」
-              </p>
-            </div>
+            {activeSlide === 'pr' ? (
+              /* Slide 1: PR & Volume Stats */
+              <div>
+                <div className="text-center py-4 relative z-10">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-400 to-[#FF6B4A] shadow-lg shadow-orange-500/30 mb-2.5 text-white">
+                    <Trophy className="w-7 h-7" />
+                  </div>
+                  <div className="inline-block px-3 py-0.5 rounded-full bg-[#00D09C]/15 border border-[#00D09C]/30 text-[#00D09C] text-xs font-black mb-1">
+                    🏆 雙重漸進正式突破新 PR！
+                  </div>
+                  <h2 className="text-2xl font-black text-white tracking-tight">
+                    解鎖 {maxWeight}kg 負重里程碑
+                  </h2>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {session.plan_name.split('—')[0]} • 恪守「滿 12 下才升重」
+                  </p>
+                </div>
 
-            {/* 4 Stats Grid */}
-            <div className="grid grid-cols-2 gap-2.5 my-2 relative z-10">
-              <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
-                  <Dumbbell className="w-3 h-3 text-[#00D09C]" />
-                  <span>當日累積總容量</span>
+                <div className="grid grid-cols-2 gap-2 my-2 relative z-10">
+                  <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
+                      <Dumbbell className="w-3 h-3 text-[#00D09C]" />
+                      <span>當日累積總容量</span>
+                    </div>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-2xl font-black text-white tabular-nums">
+                        {displayVolume.toLocaleString()}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">kg</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
+                      <TrendingUp className="w-3 h-3 text-[#00D09C]" />
+                      <span>推舉完成總組數</span>
+                    </div>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-2xl font-black text-white tabular-nums">
+                        {totalSets}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">組</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
+                      <Award className="w-3 h-3 text-sky-400" />
+                      <span>平均自覺強度</span>
+                    </div>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-2xl font-black text-sky-300 tabular-nums">
+                        RPE {avgRPE}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
+                    <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
+                      <Flame className="w-3 h-3 text-[#FF6B4A]" />
+                      <span>練後代謝加碼</span>
+                    </div>
+                    <div className="flex items-baseline justify-center gap-1">
+                      <span className="text-2xl font-black text-[#FF6B4A] tabular-nums">
+                        +{dietRecord.workoutBonusCalories}
+                      </span>
+                      <span className="text-xs text-slate-400 font-semibold">kcal</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-2xl font-black text-white tabular-nums">
-                    {displayVolume.toLocaleString()}
-                  </span>
-                  <span className="text-xs text-slate-400 font-semibold">kg</span>
+
+                <div className="mt-2.5 bg-[#111D3D] rounded-2xl p-2.5 border border-[#00D09C]/25 text-center relative z-10">
+                  <p className="text-[11px] font-black text-[#00D09C] flex items-center justify-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>JEFF NIPPARD 運動科學體系認證</span>
+                  </p>
+                  <p className="text-[10px] text-slate-300 mt-0.5 leading-relaxed">
+                    長肌纖維拉伸位停頓 1 秒 • 30° 上胸最優肌電角 • 關節零代償
+                  </p>
                 </div>
               </div>
+            ) : (
+              /* Slide 2: Hevy-Style Monthly Consistency Calendar (Image 5 Exact Match) */
+              <div className="py-3 relative z-10">
+                <div className="flex items-center justify-between mb-3 px-1">
+                  <div>
+                    <h4 className="text-sm font-black text-white">本月訓練日曆 (Consistency)</h4>
+                    <p className="text-[11px] text-[#00D09C] font-bold">已規律鍛鍊 12 次 • 達成率 96%</p>
+                  </div>
+                  <span className="text-xs font-mono font-bold text-slate-400">當前月份</span>
+                </div>
 
-              <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
-                  <TrendingUp className="w-3 h-3 text-[#00D09C]" />
-                  <span>推舉完成總組數</span>
+                {/* Calendar Grid 7 columns */}
+                <div className="bg-[#132042]/80 rounded-2xl p-3 border border-slate-700/60">
+                  <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-slate-400 mb-2">
+                    <span>一</span>
+                    <span>二</span>
+                    <span>三</span>
+                    <span>四</span>
+                    <span>五</span>
+                    <span>六</span>
+                    <span>日</span>
+                  </div>
+
+                  <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-mono">
+                    {Array.from({ length: 30 }).map((_, i) => {
+                      const dayNum = i + 1;
+                      const isTrained = trainedDaysInMonth.includes(dayNum);
+
+                      return (
+                        <div
+                          key={dayNum}
+                          className={`h-8 rounded-xl flex items-center justify-center text-[11px] transition-all ${
+                            isTrained
+                              ? 'bg-[#00D09C] text-slate-950 font-black shadow-sm shadow-[#00D09C]/40 ring-1 ring-white/40'
+                              : 'text-slate-500 bg-slate-800/40'
+                          }`}
+                        >
+                          {dayNum}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-2xl font-black text-white tabular-nums">
-                    {totalSets}
-                  </span>
-                  <span className="text-xs text-slate-400 font-semibold">組</span>
-                </div>
+
+                <p className="text-center text-[11px] text-slate-300 mt-3 font-medium">
+                  🔥 超量恢復黃金律：48-72 小時肌群輪替，每週累積最優容量！
+                </p>
               </div>
-
-              <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
-                  <Award className="w-3 h-3 text-sky-400" />
-                  <span>平均自覺強度</span>
-                </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-2xl font-black text-sky-300 tabular-nums">
-                    RPE {avgRPE}
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-[#16223F]/80 border border-white/5 rounded-2xl p-3 text-center">
-                <div className="flex items-center justify-center gap-1 text-[10px] text-slate-400 font-bold mb-1">
-                  <Flame className="w-3 h-3 text-[#FF6B4A]" />
-                  <span>練後代謝加碼</span>
-                </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-2xl font-black text-[#FF6B4A] tabular-nums">
-                    +{dietRecord.workoutBonusCalories}
-                  </span>
-                  <span className="text-xs text-slate-400 font-semibold">kcal</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Jeff Nippard Scientific Certification */}
-            <div className="mt-3 bg-[#111D3D] rounded-2xl p-3 border border-[#00D09C]/25 text-center relative z-10">
-              <p className="text-[11px] font-black text-[#00D09C] flex items-center justify-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>JEFF NIPPARD 運動科學體系認證</span>
-              </p>
-              <p className="text-[10px] text-slate-300 mt-1 leading-relaxed">
-                長肌纖維拉伸位停頓 1 秒 • 30° 上胸最優肌電角 • 關節零代償
-              </p>
-            </div>
+            )}
 
             {/* Athlete Bottom Tag */}
-            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 relative z-10">
+            <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 relative z-10">
               <span className="font-extrabold text-white">
                 ATHLETE: {userProfile.name.toUpperCase()}
               </span>
@@ -386,49 +466,80 @@ export default function ShareablePRCardModal() {
           </div>
 
           {/* ============================================================ */}
-          {/* Action Buttons */}
+          {/* Action Buttons: Hevy Image 5 Social Share Circles */}
           {/* ============================================================ */}
-          <div className="w-full space-y-2 mt-4">
-            {/* Copy Social Text Button */}
-            <motion.button
-              whileTap={{ scale: 0.98 }}
-              onClick={handleCopyText}
-              className={`w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 shadow-lg transition-all ${
-                copied
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-[#00D09C] hover:bg-[#00B887] text-white shadow-emerald-500/25'
-              }`}
-            >
-              {copied ? (
-                <>
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>已複製 Instagram / Threads 炫耀文案！</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>複製社群炫耀文案 (IG / Threads)</span>
-                </>
-              )}
-            </motion.button>
+          <div className="w-full space-y-3 mt-4">
+            <div className="text-center text-xs font-bold text-slate-400">
+              分享今日戰績 • Tag <span className="text-[#00D09C]">@HoldOnCoach</span>
+            </div>
 
-            {/* Download Card PNG & Native Share */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* 5 Social Share Platform Circles (Hevy Image 5 style) */}
+            <div className="flex items-center justify-around px-2">
               <button
-                onClick={handleDownloadCard}
-                disabled={downloading}
-                className="py-3 px-3 rounded-2xl bg-white text-slate-800 hover:bg-slate-100 font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]"
+                onClick={handleCopyText}
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+                title="分享至 Instagram 限時動態"
               >
-                <Download className="w-4 h-4 text-[#00D09C]" />
-                <span>{downloading ? '生成中...' : '儲存高清圖片'}</span>
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+                  <span className="text-sm font-black">IG</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold group-hover:text-white">Stories</span>
+              </button>
+
+              <button
+                onClick={handleCopyText}
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+                title="分享至 脆 (Threads)"
+              >
+                <div className="w-12 h-12 rounded-full bg-black border border-slate-700 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+                  <span className="text-sm font-black">@</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold group-hover:text-white">Threads</span>
+              </button>
+
+              <button
+                onClick={handleCopyText}
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+                title="分享至 X (Twitter)"
+              >
+                <div className="w-12 h-12 rounded-full bg-[#1DA1F2] flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+                  <span className="text-sm font-black">𝕏</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold group-hover:text-white">Twitter</span>
+              </button>
+
+              <button
+                onClick={handleCopyText}
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+                title="複製文字/連結"
+              >
+                <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 shadow-md group-hover:scale-105 transition-transform">
+                  <Copy className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold group-hover:text-white">
+                  {copied ? '已複製' : '複製文字'}
+                </span>
               </button>
 
               <button
                 onClick={handleNativeShare}
-                className="py-3 px-3 rounded-2xl bg-[#16223F] hover:bg-[#1E2D52] text-white border border-[#233560] font-extrabold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]"
+                className="flex flex-col items-center gap-1 group cursor-pointer"
+                title="更多系統分享"
               >
-                <Share2 className="w-4 h-4 text-sky-400" />
-                <span>系統原生分享</span>
+                <div className="w-12 h-12 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-200 shadow-md group-hover:scale-105 transition-transform">
+                  <Share2 className="w-5 h-5 text-sky-400" />
+                </div>
+                <span className="text-[10px] text-slate-400 font-bold group-hover:text-white">系統分享</span>
+              </button>
+            </div>
+
+            {/* Bottom Done Button (Hevy style) */}
+            <div className="pt-2">
+              <button
+                onClick={() => setShowShareCardModal(false)}
+                className="w-full py-3.5 rounded-2xl bg-[#00D09C] hover:bg-[#00B98A] text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-[#00D09C]/25 transition-all cursor-pointer active:scale-[0.98]"
+              >
+                <span>完成 (Done)</span>
               </button>
             </div>
           </div>

@@ -15,9 +15,13 @@ import {
   RotateCcw,
   Check,
   Layers,
+  Search,
+  Dumbbell,
+  ChevronRight,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { EXERCISE_CATALOG_POOL, type CatalogExerciseItem } from '@/data/exerciseCatalog';
+import ExerciseIllustration from './ExerciseIllustration';
 
 interface PlanEditorModalProps {
   isOpen: boolean;
@@ -40,14 +44,33 @@ export default function PlanEditorModal({ isOpen, onClose }: PlanEditorModalProp
 
   const [showCatalog, setShowCatalog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedEquipment, setSelectedEquipment] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
 
   if (!isOpen) return null;
 
   const categories = ['all', '胸部', '背部', '肩膀', '手臂', '腿部', '核心'];
+  const equipmentList = [
+    { id: 'all', label: '全部器材' },
+    { id: '啞鈴', label: '啞鈴' },
+    { id: '槓鈴', label: '槓鈴' },
+    { id: '機械', label: '機械式' },
+    { id: '滑輪', label: '滑輪/纜繩' },
+    { id: '自重', label: '自重/無器材' },
+  ];
 
-  const filteredCatalog = selectedCategory === 'all'
-    ? EXERCISE_CATALOG_POOL
-    : EXERCISE_CATALOG_POOL.filter((item) => item.category === selectedCategory);
+  const filteredCatalog = EXERCISE_CATALOG_POOL.filter((item) => {
+    const matchCat = selectedCategory === 'all' || item.category === selectedCategory;
+    const matchSearch = !searchQuery || item.exercise.exercise_name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchEquip =
+      selectedEquipment === 'all' ||
+      (selectedEquipment === '啞鈴' && item.exercise.exercise_name.includes('啞鈴')) ||
+      (selectedEquipment === '槓鈴' && item.exercise.exercise_name.includes('槓鈴')) ||
+      (selectedEquipment === '機械' && (item.exercise.exercise_name.includes('機械') || item.exercise.exercise_name.includes('坐姿'))) ||
+      (selectedEquipment === '滑輪' && (item.exercise.exercise_name.includes('滑輪') || item.exercise.exercise_name.includes('繩'))) ||
+      (selectedEquipment === '自重' && (item.exercise.exercise_name.includes('徒手') || item.exercise.exercise_name.includes('自重') || item.exercise.exercise_name.includes('支撐') || item.exercise.exercise_name.includes('抬腿')));
+    return matchCat && matchSearch && matchEquip;
+  });
 
   const handleWeightChange = (index: number, delta: number) => {
     const ex = session.exercises[index];
@@ -126,51 +149,97 @@ export default function PlanEditorModal({ isOpen, onClose }: PlanEditorModalProp
             </button>
           </div>
 
-          {/* Catalog Drawer (Collapsible) */}
+          {/* Hevy-Style Exercise Catalog Drawer (Image 2 像素級還原) */}
           {showCatalog && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="bg-slate-50 border-b border-slate-200 p-4 shrink-0 max-h-56 overflow-y-auto"
+              className="bg-slate-50 border-b border-slate-200 p-4 shrink-0 max-h-72 overflow-y-auto space-y-3"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-700">選擇要加入課表的動作：</span>
-                <div className="flex gap-1 overflow-x-auto pb-1 text-[11px]">
-                  {categories.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => setSelectedCategory(cat)}
-                      className={`px-2 py-0.5 rounded-full border transition-colors ${
-                        selectedCategory === cat
-                          ? 'bg-[#00D09C] text-white border-[#00D09C] font-bold'
-                          : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
-                      }`}
-                    >
-                      {cat === 'all' ? '全部' : cat}
-                    </button>
-                  ))}
-                </div>
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="搜尋動作名稱 (Search exercise)..."
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#00D09C] transition-colors shadow-2xs"
+                />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+              {/* Filter Row 1: Equipment */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-[10px] font-bold text-slate-400 shrink-0">器材:</span>
+                {equipmentList.map((eq) => (
+                  <button
+                    key={eq.id}
+                    onClick={() => setSelectedEquipment(eq.id)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${
+                      selectedEquipment === eq.id
+                        ? 'bg-[#0B132B] text-white shadow-2xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {eq.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Filter Row 2: Muscle Group */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-[10px] font-bold text-slate-400 shrink-0">部位:</span>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-2.5 py-1 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-[#00D09C] text-slate-950 font-black shadow-2xs'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {cat === 'all' ? '全部肌群' : cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Exercise Item List (Image 2 style) */}
+              <div className="space-y-1.5 mt-2">
                 {filteredCatalog.map((item) => (
                   <button
                     key={item.exercise.exercise_id}
                     onClick={() => handleAddFromCatalog(item)}
-                    className="p-2.5 rounded-2xl bg-white hover:bg-emerald-50/60 border border-slate-200 text-left flex items-center justify-between group transition-all shadow-xs"
+                    className="w-full p-2.5 rounded-2xl bg-white hover:bg-emerald-50/70 border border-slate-200 text-left flex items-center justify-between group transition-all shadow-2xs cursor-pointer"
                   >
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 group-hover:text-[#00A87E] transition-colors">
-                        {item.exercise.exercise_name}
-                      </p>
-                      <p className="text-[10px] text-slate-400">
-                        {item.category} • {item.exercise.target_load.weight_kg}kg × {item.exercise.target_load.reps}下
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+                        <ExerciseIllustration
+                          exerciseId={item.exercise.exercise_id}
+                          exerciseName={item.exercise.exercise_name}
+                          className="w-full h-full scale-90"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-800 group-hover:text-[#00A87E] transition-colors">
+                          {item.exercise.exercise_name}
+                        </p>
+                        <p className="text-[10px] text-slate-400">
+                          {item.category} • 預設 {item.exercise.target_load.weight_kg}kg × {item.exercise.target_load.reps}下
+                        </p>
+                      </div>
                     </div>
-                    <Plus className="w-4 h-4 text-slate-400 group-hover:text-[#00D09C] shrink-0" />
+                    <div className="w-7 h-7 rounded-lg bg-slate-100 group-hover:bg-[#00D09C] group-hover:text-white flex items-center justify-center text-slate-400 transition-colors">
+                      <Plus className="w-4 h-4" />
+                    </div>
                   </button>
                 ))}
+                {filteredCatalog.length === 0 && (
+                  <p className="text-center text-xs text-slate-400 py-4">
+                    找不到符合條件的動作，請嘗試清除篩選或關鍵字。
+                  </p>
+                )}
               </div>
             </motion.div>
           )}

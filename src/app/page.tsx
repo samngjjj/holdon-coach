@@ -23,6 +23,7 @@ import PlanSelectionView from '@/components/PlanSelectionView';
 import AppBottomNav from '@/components/AppBottomNav';
 import ShareablePRCardModal from '@/components/ShareablePRCardModal';
 import OnboardingFlowModal from '@/components/OnboardingFlowModal';
+import RestTimerFloatingDock from '@/components/RestTimerFloatingDock';
 
 export default function Home() {
   const {
@@ -34,6 +35,7 @@ export default function Home() {
   } = useWorkoutStore();
 
   const [showDemoBar, setShowDemoBar] = useState(false);
+  const [isTimerExpanded, setIsTimerExpanded] = useState(false);
 
   const isWorkoutCompleted = showSummary || session.current_state === 'COMPLETED';
 
@@ -76,10 +78,20 @@ export default function Home() {
         )}
       </div>
 
-      {/* Rest Timer Overlay (Full Screen) — Active during workout resting */}
+      {/* Hevy-Style Rest Timer: Full-Screen Overlay OR Bottom Floating Dock */}
       <AnimatePresence>
         {isResting && !isWorkoutCompleted && activeTab === 'workout' && (
-          <RestTimerOverlay key="rest-timer-overlay" />
+          isTimerExpanded ? (
+            <RestTimerOverlay
+              key="rest-timer-overlay"
+              onMinimize={() => setIsTimerExpanded(false)}
+            />
+          ) : (
+            <RestTimerFloatingDock
+              key="rest-timer-dock"
+              onExpandFullScreen={() => setIsTimerExpanded(true)}
+            />
+          )
         )}
       </AnimatePresence>
 

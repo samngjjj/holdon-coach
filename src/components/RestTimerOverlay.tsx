@@ -6,11 +6,15 @@
 
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, SkipForward, Wind, Sparkles } from 'lucide-react';
+import { Plus, SkipForward, Wind, Sparkles, Minimize2, ChevronDown } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useTimer } from '@/hooks/useTimer';
 
-export default function RestTimerOverlay() {
+interface RestTimerOverlayProps {
+  onMinimize?: () => void;
+}
+
+export default function RestTimerOverlay({ onMinimize }: RestTimerOverlayProps) {
   const {
     isResting,
     restSecondsRemaining,
@@ -66,6 +70,27 @@ export default function RestTimerOverlay() {
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-[#0B132B]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-white overflow-y-auto"
     >
+      {/* Top Bar with Minimize Button (Hevy Floating Dock) */}
+      <div className="absolute top-6 inset-x-6 flex items-center justify-between z-10">
+        <div className="flex items-center gap-2 bg-white/10 px-3 py-1 rounded-full">
+          <Wind className="w-3.5 h-3.5 text-[#00D09C]" />
+          <span className="text-white text-[11px] font-black uppercase tracking-wider">
+            組間修復
+          </span>
+        </div>
+
+        {onMinimize && (
+          <button
+            onClick={onMinimize}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white text-xs font-bold transition-colors"
+            title="縮小為底端懸浮工具列"
+          >
+            <ChevronDown className="w-4 h-4" />
+            <span>縮小懸浮列</span>
+          </button>
+        )}
+      </div>
+
       {/* Rest status label */}
       <motion.div
         initial={{ y: -15, opacity: 0 }}

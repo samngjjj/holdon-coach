@@ -21,6 +21,9 @@ import {
   TrendingUp,
   Activity,
   Play,
+  Plus,
+  Search,
+  FolderPlus,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { calculateProfileStats, WORKOUT_PLANS } from '@/data/exercises';
@@ -33,6 +36,7 @@ export default function WelcomeScreen() {
     session,
     userProfile,
     startWorkout,
+    startEmptyWorkout,
     selectPlan,
     setActiveTab,
     setShowProfileModal,
@@ -61,6 +65,50 @@ export default function WelcomeScreen() {
 
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-4 pb-24 text-slate-800">
+      {/* ============================================================ */}
+      {/* Hevy Signature Quick Start & Routines Hub (Image 3 像素級神還原) */}
+      {/* ============================================================ */}
+      <div className="mb-4 space-y-3">
+        {/* Quick Start Box */}
+        <div className="bg-white rounded-2xl p-3.5 border border-slate-200/90 shadow-2xs">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-black text-slate-800 tracking-wide">
+              快速開練 (Quick Start)
+            </span>
+          </div>
+          <button
+            onClick={startEmptyWorkout}
+            className="w-full py-3 rounded-xl bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-[#00D09C] text-slate-700 hover:text-[#00A87E] font-black text-xs flex items-center justify-center gap-1.5 transition-all shadow-2xs active:scale-[0.99] cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-[#00D09C]" />
+            <span>+ 開始自由空課表 (Start Empty Workout)</span>
+          </button>
+        </div>
+
+        {/* Routines Control Bar */}
+        <div className="flex items-center justify-between px-1">
+          <span className="text-xs font-black text-slate-800 tracking-wide flex items-center gap-1">
+            <span>我的課表 (Routines)</span>
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowPlanEditorModal(true)}
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+            >
+              <FolderPlus className="w-3.5 h-3.5 text-[#00D09C]" />
+              <span>建立新課表</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('plans')}
+              className="px-2.5 py-1 rounded-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold flex items-center gap-1 shadow-2xs transition-colors cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5 text-sky-600" />
+              <span>探索課表庫</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* 1. Top 30-Day Plan Hero Card (Screen 2: 30日計畫 with Orange Tag) */}
       <motion.div
         initial={{ opacity: 0, y: 15 }}

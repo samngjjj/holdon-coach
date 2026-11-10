@@ -247,8 +247,10 @@ interface WorkoutState {
 
   // Actions
   startWorkout: () => void;
+  startEmptyWorkout: () => void;
   selectPlan: (planId: string) => void;
-  completeSet: (repsCompleted: number, rpe: number) => void;
+  completeSet: (repsCompleted: number, rpe: number, customWeight?: number) => void;
+  addSetToCurrentExercise: () => void;
   dropWeightManually: (reason?: string) => void;
   reportPain: (location: string) => void;
   startRest: () => void;
@@ -892,6 +894,61 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       },
     })),
 
+  startEmptyWorkout: () => {
+    const profile = get().userProfile;
+    const baseExercise = JSON.parse(JSON.stringify(WORKOUT_PLANS[0].exercises[0]));
+    set({
+      currentExerciseIndex: 0,
+      currentSet: 1,
+      isResting: false,
+      restSecondsRemaining: 90,
+      setHistory: [],
+      consecutiveMaxRepSets: 0,
+      lastAdjustment: null,
+      safetyTier: 0,
+      painLocation: null,
+      showSummary: false,
+      totalVolumeKg: 0,
+      activeTab: 'workout',
+      session: {
+        app_name: 'HoldOn_Coach',
+        session_id: `empty_${Date.now()}`,
+        user_name: profile.name,
+        plan_id: 'empty_routine',
+        plan_name: '自由訓練 (Empty Workout)',
+        workout_goal: 'Hypertrophy_8_12_Reps',
+        total_volume_kg: 0,
+        current_state: 'ACTIVE_SET',
+        exercises: [baseExercise],
+        rest_timer: {
+          default_seconds: 90,
+          accumulated_fatigue_extension_seconds: 0,
+        },
+        coach_feedback: {
+          speech_text: '自由訓練已啟動！點擊上方「修改課表」可隨時從動作庫新增任何訓練！💪',
+          tone: 'encouraging',
+        },
+      },
+    });
+  },
+
+  addSetToCurrentExercise: () => {
+    const state = get();
+    const exercise = state.session.exercises[state.currentExerciseIndex];
+    if (!exercise) return;
+    const updated = [...state.session.exercises];
+    updated[state.currentExerciseIndex] = {
+      ...exercise,
+      total_sets: exercise.total_sets + 1,
+    };
+    set({
+      session: {
+        ...state.session,
+        exercises: updated,
+      },
+    });
+  },
+
   dropWeightManually: (reason = '有點硬') => {
     const state = get();
     const exercise = state.session.exercises[state.currentExerciseIndex];
@@ -931,18 +988,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     });
   },
 
-  completeSet: (repsCompleted: number, rpe: number) => {
+  completeSet: (repsCompleted: number, rpe: number, customWeight?: number) => {
     const state = get();
     const exercise = state.session.exercises[state.currentExerciseIndex];
     if (!exercise) return;
 
-    const volume = exercise.target_load.weight_kg * repsCompleted;
+    const actualWeight = customWeight !== undefined ? customWeight : exercise.target_load.weight_kg;
+    const volume = actualWeight * repsCompleted;
     const isPain = state.safetyTier > 0;
 
     const setRecord: SetRecord = {
       exerciseId: exercise.exercise_id,
       setNumber: state.currentSet,
-      weight_kg: exercise.target_load.weight_kg,
+      weight_kg: actualWeight,
       reps_completed: repsCompleted,
       rpe,
       pain_reported: isPain,

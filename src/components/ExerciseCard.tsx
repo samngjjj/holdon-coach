@@ -21,6 +21,8 @@ import {
   ArrowDownCircle,
   Sparkles,
   Volume2,
+  Plus,
+  Clock,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useVoiceListener } from '@/hooks/useVoiceListener';
@@ -48,12 +50,17 @@ export default function ExerciseCard() {
     dropWeightManually,
     processVoiceCommand,
     resetSession,
+    totalVolumeKg,
+    setHistory,
+    addSetToCurrentExercise,
   } = useWorkoutStore();
 
   const exercise = session.exercises[currentExerciseIndex];
   const [completedReps, setCompletedReps] = useState(exercise?.target_load.reps || 10);
   const [lastVoiceText, setLastVoiceText] = useState<string>('');
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
+
+  const exerciseRecords = setHistory.filter((r) => r.exerciseId === exercise?.exercise_id);
 
   // Synchronize stepper whenever set advances or target reps calibrate
   useEffect(() => {
@@ -277,6 +284,135 @@ export default function ExerciseCard() {
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               目標配重與次數
             </p>
+          </div>
+
+          {/* ============================================================ */}
+          {/* Hevy Signature Multi-Set Log Table (Image 4 像素級神還原) */}
+          {/* ============================================================ */}
+          <div className="w-full mt-3 mb-2 bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+            {/* Live Metrics Header Bar */}
+            <div className="flex items-center justify-between px-3 py-2 bg-slate-50/80 border-b border-slate-100 text-[11px] font-bold text-slate-500">
+              <span className="flex items-center gap-1 text-sky-600">
+                <Clock className="w-3.5 h-3.5" />
+                <span>訓練中</span>
+              </span>
+              <span className="font-mono text-slate-600">
+                當日累積：<b className="text-slate-900">{totalVolumeKg}kg</b>
+              </span>
+              <span className="font-mono text-slate-600">
+                總組數：<b className="text-[#00A87E]">{setHistory.length} 組</b>
+              </span>
+            </div>
+
+            {/* Table Header: SET | PREVIOUS | KG | REPS | RPE | ✓ */}
+            <div className="grid grid-cols-12 gap-1 py-1.5 px-3 bg-slate-100/60 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center items-center">
+              <div className="col-span-2 text-left pl-0.5">組別</div>
+              <div className="col-span-3">上次紀錄</div>
+              <div className="col-span-2">公斤</div>
+              <div className="col-span-2">次數</div>
+              <div className="col-span-2">RPE</div>
+              <div className="col-span-1">完成</div>
+            </div>
+
+            {/* Table Rows */}
+            <div className="divide-y divide-slate-100 px-2 py-1">
+              {Array.from({ length: exercise.total_sets }).map((_, idx) => {
+                const setNum = idx + 1;
+                const historyItem = exerciseRecords.find((r) => r.setNumber === setNum);
+                const isDone = !!historyItem;
+                const isCurrent = setNum === currentSet;
+                const isWarmup = setNum === 1 && exercise.total_sets >= 4;
+
+                return (
+                  <div
+                    key={setNum}
+                    className={`grid grid-cols-12 gap-1 py-1.5 px-1.5 rounded-xl items-center text-xs transition-all my-0.5 ${
+                      isDone
+                        ? 'bg-[#00D09C]/15 border border-[#00D09C]/30 text-slate-900'
+                        : isCurrent
+                        ? 'bg-slate-50/90 border-2 border-[#00D09C] ring-2 ring-[#00D09C]/15 shadow-2xs'
+                        : 'text-slate-400'
+                    }`}
+                  >
+                    {/* Set Tag */}
+                    <div className="col-span-2 pl-0.5 font-black flex items-center gap-1">
+                      <span
+                        className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-mono font-bold ${
+                          isDone
+                            ? 'bg-[#00D09C] text-slate-950'
+                            : isCurrent
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-slate-200 text-slate-600'
+                        }`}
+                      >
+                        {isWarmup ? 'W' : setNum}
+                      </span>
+                    </div>
+
+                    {/* Previous record */}
+                    <div className="col-span-3 text-center text-[11px] font-mono text-slate-400">
+                      {Math.max(10, exercise.target_load.weight_kg - 2)}kg × 10
+                    </div>
+
+                    {/* KG */}
+                    <div className="col-span-2 text-center font-mono font-bold text-slate-800">
+                      {isDone ? `${historyItem.weight_kg}` : `${exercise.target_load.weight_kg}`}
+                    </div>
+
+                    {/* REPS */}
+                    <div className="col-span-2 text-center font-mono font-bold text-slate-800">
+                      {isDone ? `${historyItem.reps_completed}` : isCurrent ? `${completedReps}` : `${exercise.target_load.reps}`}
+                    </div>
+
+                    {/* RPE */}
+                    <div className="col-span-2 text-center">
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                          isDone
+                            ? 'bg-white/80 text-emerald-800 shadow-2xs'
+                            : isCurrent
+                            ? 'bg-slate-200 text-slate-700'
+                            : 'text-slate-400'
+                        }`}
+                      >
+                        {isDone ? `RPE ${historyItem.rpe}` : 'RPE 8'}
+                      </span>
+                    </div>
+
+                    {/* Checkmark Button */}
+                    <div className="col-span-1 flex justify-center">
+                      {isDone ? (
+                        <div className="w-5 h-5 rounded-md bg-[#00D09C] text-white flex items-center justify-center shadow-xs">
+                          <Check className="w-3.5 h-3.5 stroke-[3]" />
+                        </div>
+                      ) : isCurrent ? (
+                        <button
+                          onClick={handleComplete}
+                          className="w-5 h-5 rounded-md bg-[#00D09C] hover:bg-[#00B98A] text-white flex items-center justify-center shadow-sm cursor-pointer active:scale-90 transition-transform"
+                          title="完成當前組"
+                        >
+                          <Check className="w-3 h-3 stroke-[3]" />
+                        </button>
+                      ) : (
+                        <div className="w-5 h-5 rounded-md border border-slate-200" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* + Add Set Button */}
+            <div className="p-1.5 bg-slate-50/50 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={addSetToCurrentExercise}
+                className="w-full py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#00D09C]" />
+                <span>+ 新增一組 (Add Set)</span>
+              </button>
+            </div>
           </div>
 
           {/* Actual Reps Stepper Counter */}
