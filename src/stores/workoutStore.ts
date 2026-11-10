@@ -42,6 +42,34 @@ export interface DynamicAdjustment {
 }
 
 // ============================================================
+// Real-Time Change Notice Records (動作與重量更換即時通知)
+// ============================================================
+export interface ExerciseChangeNotice {
+  id: string;
+  prevExerciseName: string;
+  newExerciseName: string;
+  prevWeight?: number;
+  newWeight?: number;
+  prevGrip?: string;
+  newGrip?: string;
+  reason: string;
+  type: 'switch' | 'safety_replacement' | 'next' | 'reorder';
+  timestamp: number;
+}
+
+export interface WeightChangeNotice {
+  id: string;
+  prevWeight: number;
+  newWeight: number;
+  delta: number;
+  prevReps?: number;
+  newReps?: number;
+  reason: string;
+  type: 'drop' | 'increase' | 'manual';
+  timestamp: number;
+}
+
+// ============================================================
 // Set Record — tracks each completed set
 // ============================================================
 export interface SetRecord {
@@ -204,6 +232,12 @@ interface WorkoutState {
   showPlanEditorModal: boolean;
   setShowPlanEditorModal: (show: boolean) => void;
   isListening: boolean;
+
+  // Real-time Animation Change Notices (原本是什麼並更改了什麼)
+  exerciseChangeNotice: ExerciseChangeNotice | null;
+  weightChangeNotice: WeightChangeNotice | null;
+  clearExerciseChangeNotice: () => void;
+  clearWeightChangeNotice: () => void;
 
   // Feature 1: Shareable PR & Workout Card Modal
   showShareCardModal: boolean;
@@ -658,6 +692,12 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   setShowPlanEditorModal: (show) => set({ showPlanEditorModal: show }),
   isListening: false,
 
+  // Real-time Animation Change Notices
+  exerciseChangeNotice: null,
+  weightChangeNotice: null,
+  clearExerciseChangeNotice: () => set({ exerciseChangeNotice: null }),
+  clearWeightChangeNotice: () => set({ weightChangeNotice: null }),
+
   // Feature 1: Shareable PR & Workout Card Modal
   showShareCardModal: false,
   setShowShareCardModal: (show) => set({ showShareCardModal: show }),
@@ -864,6 +904,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       setHistory: [],
       consecutiveMaxRepSets: 0,
       lastAdjustment: null,
+      exerciseChangeNotice: null,
+      weightChangeNotice: null,
       safetyTier: 0,
       painLocation: null,
       showSummary: false,
@@ -912,6 +954,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       setHistory: [],
       consecutiveMaxRepSets: 0,
       lastAdjustment: null,
+      exerciseChangeNotice: null,
+      weightChangeNotice: null,
       safetyTier: 0,
       painLocation: null,
       showSummary: false,
@@ -1030,6 +1074,22 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     const exercise = state.session.exercises[state.currentExerciseIndex];
     if (!exercise) return;
 
+    let wtNotice: WeightChangeNotice | null = null;
+    if (partial.weight_kg !== undefined && partial.weight_kg !== exercise.target_load.weight_kg) {
+      const delta = Math.round((partial.weight_kg - exercise.target_load.weight_kg) * 10) / 10;
+      wtNotice = {
+        id: `wt-change-${Date.now()}`,
+        prevWeight: exercise.target_load.weight_kg,
+        newWeight: partial.weight_kg,
+        delta,
+        prevReps: exercise.target_load.reps,
+        newReps: partial.reps !== undefined ? partial.reps : exercise.target_load.reps,
+        reason: delta > 0 ? '手動調整加重挑戰' : '手動調整減輕重量',
+        type: delta > 0 ? 'increase' : 'drop',
+        timestamp: Date.now(),
+      };
+    }
+
     const updatedExercises = [...state.session.exercises];
     updatedExercises[state.currentExerciseIndex] = {
       ...exercise,
@@ -1041,6 +1101,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     };
 
     set({
+      ...(wtNotice ? { weightChangeNotice: wtNotice } : {}),
       session: {
         ...state.session,
         exercises: updatedExercises,
@@ -1064,6 +1125,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       },
     };
 
+    const delta = Math.round((reduced - exercise.target_load.weight_kg) * 10) / 10;
+    const wtNotice: WeightChangeNotice = {
+      id: `wt-change-${Date.now()}`,
+      prevWeight: exercise.target_load.weight_kg,
+      newWeight: reduced,
+      delta,
+      prevReps: exercise.target_load.reps,
+      newReps: 8,
+      reason: reason === '有點硬' ? '手動降重保護（避免肌肉代償與關節壓力）' : reason,
+      type: 'drop',
+      timestamp: Date.now(),
+    };
+
     const adjustment: DynamicAdjustment = {
       rpe: 9,
       prevWeight: exercise.target_load.weight_kg,
@@ -1076,6 +1150,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     set({
       lastAdjustment: adjustment,
+      weightChangeNotice: wtNotice,
       session: {
         ...state.session,
         exercises: updated,
@@ -1200,6 +1275,22 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     // Exercise Complete, advance to next exercise
     if (isLastSetOfExercise) {
+      const nextEx = state.session.exercises[state.currentExerciseIndex + 1];
+      const exNotice: ExerciseChangeNotice | null = nextEx
+        ? {
+            id: `ex-change-${Date.now()}`,
+            prevExerciseName: exercise.exercise_name,
+            newExerciseName: nextEx.exercise_name,
+            prevWeight: exercise.target_load.weight_kg,
+            newWeight: nextEx.target_load.weight_kg,
+            prevGrip: exercise.grip_type,
+            newGrip: nextEx.grip_type,
+            reason: '完成當前動作全部組數，自動進入下一訓練項',
+            type: 'next',
+            timestamp: Date.now(),
+          }
+        : null;
+
       set((s) => ({
         setHistory: newHistory,
         totalVolumeKg: newVolume,
@@ -1210,6 +1301,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         safetyTier: 0,
         painLocation: null,
         lastAdjustment: null,
+        exerciseChangeNotice: exNotice,
         isResting: true,
         restSecondsRemaining: 90,
         dietRecord: updatedDiet,
@@ -1227,6 +1319,22 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     }
 
     // Normal set: continue to next set
+    let wtNotice: WeightChangeNotice | null = null;
+    if (progression.weight_kg !== exercise.target_load.weight_kg) {
+      const delta = Math.round((progression.weight_kg - exercise.target_load.weight_kg) * 10) / 10;
+      wtNotice = {
+        id: `wt-change-${Date.now()}`,
+        prevWeight: exercise.target_load.weight_kg,
+        newWeight: progression.weight_kg,
+        delta,
+        prevReps: exercise.target_load.reps,
+        newReps: progression.reps,
+        reason: delta > 0 ? '雙重進階成功：解鎖新重量挑戰！💪' : progression.adjustment.summary,
+        type: delta > 0 ? 'increase' : 'drop',
+        timestamp: Date.now(),
+      };
+    }
+
     const updatedExercises = [...state.session.exercises];
     updatedExercises[state.currentExerciseIndex] = {
       ...exercise,
@@ -1247,6 +1355,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       currentSet: s.currentSet + 1,
       showRPEInput: false,
       lastAdjustment: progression.adjustment,
+      ...(wtNotice ? { weightChangeNotice: wtNotice } : {}),
       isResting: true,
       restSecondsRemaining: restSecs,
       dietRecord: updatedDiet,
@@ -1269,6 +1378,19 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
     if (newTier === 1) {
       const reducedWeight = getReducedWeight(exercise.target_load.weight_kg, 0.2);
+      const delta = Math.round((reducedWeight - exercise.target_load.weight_kg) * 10) / 10;
+      const wtNotice: WeightChangeNotice = {
+        id: `wt-change-${Date.now()}`,
+        prevWeight: exercise.target_load.weight_kg,
+        newWeight: reducedWeight,
+        delta,
+        prevReps: exercise.target_load.reps,
+        newReps: 8,
+        reason: `Tier-1 關節痛感防護：更換為對握中立握法，重量下修 20% (${exercise.target_load.weight_kg}kg ➔ ${reducedWeight}kg)`,
+        type: 'drop',
+        timestamp: Date.now(),
+      };
+
       const updatedExercises = [...state.session.exercises];
       updatedExercises[state.currentExerciseIndex] = {
         ...exercise,
@@ -1287,6 +1409,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         painLocation: location,
         showPainInput: false,
         restDefaultSeconds: 120,
+        weightChangeNotice: wtNotice,
         lastAdjustment: {
           rpe: 9,
           prevWeight: exercise.target_load.weight_kg,
@@ -1308,6 +1431,21 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       });
     } else {
       if (exercise.replacement) {
+        const oldName = exercise.exercise_name;
+        const newName = exercise.replacement.exercise_name;
+        const exNotice: ExerciseChangeNotice = {
+          id: `ex-change-${Date.now()}`,
+          prevExerciseName: oldName,
+          newExerciseName: newName,
+          prevWeight: exercise.target_load.weight_kg,
+          newWeight: exercise.target_load.weight_kg,
+          prevGrip: exercise.grip_type,
+          newGrip: exercise.replacement.grip_type,
+          reason: 'Tier-2 關節強制防護：自動抽換為固定軌跡機械胸推機保護',
+          type: 'safety_replacement',
+          timestamp: Date.now(),
+        };
+
         const updatedExercises = [...state.session.exercises];
         updatedExercises[state.currentExerciseIndex] = {
           ...exercise,
@@ -1324,6 +1462,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
           painLocation: location,
           showPainInput: false,
           currentSet: 1,
+          exerciseChangeNotice: exNotice,
           lastAdjustment: {
             rpe: 10,
             prevWeight: exercise.target_load.weight_kg,
@@ -1412,6 +1551,24 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     if (nextIndex >= state.session.exercises.length) {
       get().finishWorkout();
     } else {
+      const prevEx = state.session.exercises[state.currentExerciseIndex];
+      const nextEx = state.session.exercises[nextIndex];
+
+      const exNotice: ExerciseChangeNotice | null = nextEx
+        ? {
+            id: `ex-change-${Date.now()}`,
+            prevExerciseName: prevEx ? prevEx.exercise_name : '原動作',
+            newExerciseName: nextEx.exercise_name,
+            prevWeight: prevEx?.target_load.weight_kg,
+            newWeight: nextEx.target_load.weight_kg,
+            prevGrip: prevEx?.grip_type,
+            newGrip: nextEx.grip_type,
+            reason: '完成當前組數，進入下一訓練項',
+            type: 'next',
+            timestamp: Date.now(),
+          }
+        : null;
+
       set({
         currentExerciseIndex: nextIndex,
         currentSet: 1,
@@ -1419,6 +1576,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
         painLocation: null,
         consecutiveMaxRepSets: 0,
         lastAdjustment: null,
+        exerciseChangeNotice: exNotice,
         isResting: false,
         session: { ...state.session, current_state: 'ACTIVE_SET' },
       });
@@ -1530,7 +1688,23 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
   jumpToExercise: (index: number) => {
     const state = get();
     if (index < 0 || index >= state.session.exercises.length) return;
+    if (index === state.currentExerciseIndex) return;
+    const prevEx = state.session.exercises[state.currentExerciseIndex];
     const targetEx = state.session.exercises[index];
+
+    const exNotice: ExerciseChangeNotice = {
+      id: `ex-change-${Date.now()}`,
+      prevExerciseName: prevEx ? prevEx.exercise_name : '原動作',
+      newExerciseName: targetEx.exercise_name,
+      prevWeight: prevEx?.target_load.weight_kg,
+      newWeight: targetEx.target_load.weight_kg,
+      prevGrip: prevEx?.grip_type,
+      newGrip: targetEx.grip_type,
+      reason: `自頂部選單切換至第 ${index + 1} 個動作`,
+      type: 'switch',
+      timestamp: Date.now(),
+    };
+
     set({
       currentExerciseIndex: index,
       currentSet: 1,
@@ -1538,6 +1712,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       painLocation: null,
       consecutiveMaxRepSets: 0,
       lastAdjustment: null,
+      exerciseChangeNotice: exNotice,
       isResting: false,
       session: {
         ...state.session,
@@ -1596,11 +1771,29 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
   reverseExercisesOrder: () => {
     const state = get();
+    const prevEx = state.session.exercises[state.currentExerciseIndex];
     const reversed = [...state.session.exercises].reverse().map((ex, idx, arr) => ({
       ...ex,
       exercise_index: idx,
       total_exercises: arr.length,
     }));
+
+    const newEx = reversed[0];
+    const exNotice: ExerciseChangeNotice | null =
+      prevEx && newEx && prevEx.exercise_id !== newEx.exercise_id
+        ? {
+            id: `ex-change-${Date.now()}`,
+            prevExerciseName: prevEx.exercise_name,
+            newExerciseName: newEx.exercise_name,
+            prevWeight: prevEx.target_load.weight_kg,
+            newWeight: newEx.target_load.weight_kg,
+            prevGrip: prevEx.grip_type,
+            newGrip: newEx.grip_type,
+            reason: '課表次序前後調轉，由新順位第 1 動作開始',
+            type: 'reorder',
+            timestamp: Date.now(),
+          }
+        : null;
 
     set({
       currentExerciseIndex: 0,
@@ -1608,6 +1801,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       safetyTier: 0,
       painLocation: null,
       lastAdjustment: null,
+      ...(exNotice ? { exerciseChangeNotice: exNotice } : {}),
       isResting: false,
       session: {
         ...state.session,
@@ -1695,6 +1889,42 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     const state = get();
     if (index < 0 || index >= state.session.exercises.length) return;
     const exercises = [...state.session.exercises];
+    const prevEx = exercises[index];
+
+    let wtNotice: WeightChangeNotice | null = null;
+    let exNotice: ExerciseChangeNotice | null = null;
+
+    if (index === state.currentExerciseIndex && prevEx) {
+      if (patch.target_load?.weight_kg !== undefined && patch.target_load.weight_kg !== prevEx.target_load.weight_kg) {
+        const delta = Math.round((patch.target_load.weight_kg - prevEx.target_load.weight_kg) * 10) / 10;
+        wtNotice = {
+          id: `wt-change-${Date.now()}`,
+          prevWeight: prevEx.target_load.weight_kg,
+          newWeight: patch.target_load.weight_kg,
+          delta,
+          prevReps: prevEx.target_load.reps,
+          newReps: patch.target_load.reps ?? prevEx.target_load.reps,
+          reason: delta > 0 ? '課表編輯調升重量' : '課表編輯調降重量',
+          type: delta > 0 ? 'increase' : 'drop',
+          timestamp: Date.now(),
+        };
+      }
+      if (patch.exercise_name && patch.exercise_name !== prevEx.exercise_name) {
+        exNotice = {
+          id: `ex-change-${Date.now()}`,
+          prevExerciseName: prevEx.exercise_name,
+          newExerciseName: patch.exercise_name,
+          prevWeight: prevEx.target_load.weight_kg,
+          newWeight: patch.target_load?.weight_kg ?? prevEx.target_load.weight_kg,
+          prevGrip: prevEx.grip_type,
+          newGrip: patch.grip_type ?? prevEx.grip_type,
+          reason: '課表動作自訂抽換',
+          type: 'switch',
+          timestamp: Date.now(),
+        };
+      }
+    }
+
     exercises[index] = {
       ...exercises[index],
       ...patch,
@@ -1705,6 +1935,8 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     };
 
     set({
+      ...(wtNotice ? { weightChangeNotice: wtNotice } : {}),
+      ...(exNotice ? { exerciseChangeNotice: exNotice } : {}),
       session: {
         ...state.session,
         exercises,

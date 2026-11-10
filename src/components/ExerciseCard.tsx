@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Check,
@@ -32,6 +32,7 @@ import RPEInput from './RPEInput';
 import PainInput from './PainInput';
 import PlanEditorModal from './PlanEditorModal';
 import ExerciseIllustration from './ExerciseIllustration';
+import ChangeNotificationBanner from './ChangeNotificationBanner';
 
 export default function ExerciseCard() {
   const {
@@ -64,6 +65,28 @@ export default function ExerciseCard() {
   const [completedReps, setCompletedReps] = useState(exercise?.target_load.reps || 10);
   const [lastVoiceText, setLastVoiceText] = useState<string>('');
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
+
+  // Track previous target weight to power directional pop animations & inline diff badge
+  const prevTargetWeightRef = useRef<number | null>(null);
+  const [weightDeltaInfo, setWeightDeltaInfo] = useState<{
+    prev: number;
+    current: number;
+    delta: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!exercise) return;
+    const currentWeight = exercise.target_load.weight_kg;
+    if (prevTargetWeightRef.current !== null && prevTargetWeightRef.current !== currentWeight) {
+      const prev = prevTargetWeightRef.current;
+      const delta = Math.round((currentWeight - prev) * 10) / 10;
+      setWeightDeltaInfo({ prev, current: currentWeight, delta });
+      const timer = setTimeout(() => setWeightDeltaInfo(null), 4500);
+      prevTargetWeightRef.current = currentWeight;
+      return () => clearTimeout(timer);
+    }
+    prevTargetWeightRef.current = currentWeight;
+  }, [exercise?.target_load.weight_kg]);
 
   // Per-set inline editing states for typing freedom (KG & REPS)
   const [editingWeight, setEditingWeight] = useState<Record<number, string>>({});
@@ -347,6 +370,11 @@ export default function ExerciseCard() {
           )}
         </AnimatePresence>
 
+        {/* Real-time Change Notification Banner (原本是什麼並更改了什麼) */}
+        <div className="px-4 pt-1.5">
+          <ChangeNotificationBanner />
+        </div>
+
         {/* Central Visual Demonstration Area (Motion Trajectory with Blue Arrows) */}
         <div className="relative w-full h-52 bg-slate-50/60 border-b border-slate-100 flex items-center justify-center px-4 overflow-hidden">
           <ExerciseIllustration
@@ -376,9 +404,18 @@ export default function ExerciseCard() {
 
         {/* Exercise Name & Big Mint Green Count (Signature Screen 3 Style) */}
         <div className="p-5 text-center flex flex-col items-center">
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight mb-1">
-            {exercise.exercise_name}
-          </h2>
+          <AnimatePresence mode="wait">
+            <motion.h2
+              key={`${exercise.exercise_id}_${exercise.exercise_name}`}
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.98 }}
+              transition={{ duration: 0.25 }}
+              className="text-2xl font-black text-slate-900 tracking-tight mb-1"
+            >
+              {exercise.exercise_name}
+            </motion.h2>
+          </AnimatePresence>
 
           <div className="flex items-center justify-center gap-2 mb-2">
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
@@ -390,16 +427,79 @@ export default function ExerciseCard() {
           </div>
 
           {/* HUGE VIBRANT GREEN TARGET LOAD DISPLAY (Screen 3: 'x 12' / '16kg × 12') */}
-          <div className="my-2">
+          <div className="my-2 flex flex-col items-center">
+            {/* Inline Animated Before/After Weight Diff Pill */}
+            <AnimatePresence>
+              {weightDeltaInfo && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85, y: -6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.85, y: -6 }}
+                  className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-bold shadow-2xs mb-1.5 transition-all ${
+                    weightDeltaInfo.delta < 0
+                      ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                      : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  }`}
+                >
+                  <span className="line-through opacity-70 font-mono">{weightDeltaInfo.prev}kg</span>
+                  <span className="font-bold">➔</span>
+                  <span className="font-mono font-black">{weightDeltaInfo.current}kg</span>
+                  <span
+                    className={`text-[10px] px-1 rounded font-mono font-black ${
+                      weightDeltaInfo.delta < 0
+                        ? 'bg-amber-200 text-amber-900'
+                        : 'bg-emerald-200 text-emerald-900'
+                    }`}
+                  >
+                    {weightDeltaInfo.delta > 0 ? `+${weightDeltaInfo.delta}` : weightDeltaInfo.delta}kg
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <motion.div
               key={`${exercise.target_load.weight_kg}_${exercise.target_load.reps}`}
               initial={{ scale: 0.95 }}
               animate={{ scale: 1 }}
-              className="text-[#00D09C] font-black text-4xl sm:text-5xl tracking-tight tabular-nums flex items-baseline justify-center gap-2"
+              className="text-[#00D09C] font-black text-4xl sm:text-5xl tracking-tight tabular-nums flex items-baseline justify-center gap-2 overflow-hidden py-0.5"
             >
-              <span>{exercise.target_load.weight_kg}kg</span>
+              <div className="overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={exercise.target_load.weight_kg}
+                    initial={{
+                      y: weightDeltaInfo && weightDeltaInfo.delta < 0 ? -22 : 22,
+                      opacity: 0,
+                      scale: 0.85,
+                    }}
+                    animate={{ y: 0, opacity: 1, scale: 1 }}
+                    exit={{
+                      y: weightDeltaInfo && weightDeltaInfo.delta < 0 ? 22 : -22,
+                      opacity: 0,
+                      scale: 0.85,
+                    }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    className="inline-block"
+                  >
+                    {exercise.target_load.weight_kg}kg
+                  </motion.span>
+                </AnimatePresence>
+              </div>
               <span className="text-2xl text-slate-300 font-light">×</span>
-              <span>{exercise.target_load.reps}</span>
+              <div className="overflow-hidden">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  <motion.span
+                    key={exercise.target_load.reps}
+                    initial={{ y: 15, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -15, opacity: 0 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                    className="inline-block"
+                  >
+                    {exercise.target_load.reps}
+                  </motion.span>
+                </AnimatePresence>
+              </div>
             </motion.div>
             <p className="text-xs text-slate-400 font-medium mt-0.5">
               目標配重與次數
