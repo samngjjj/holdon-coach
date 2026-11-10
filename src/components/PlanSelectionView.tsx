@@ -32,7 +32,7 @@ import { useWorkoutStore } from '@/stores/workoutStore';
 import { WORKOUT_PLANS, type WorkoutPlanPreset } from '@/data/exercises';
 import ExerciseIllustration from './ExerciseIllustration';
 
-type MainTab = 'recommended' | 'goals' | 'splits' | 'home';
+type MainTab = 'recommended' | 'dah' | 'zhuo' | 'goals' | 'splits' | 'home';
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 type SplitFilter = 'all' | 'ppl' | 'upper_lower' | 'bro';
 
@@ -62,28 +62,34 @@ export default function PlanSelectionView() {
       return WORKOUT_PLANS.find((p) => p.id === 'fat_loss_belly') || WORKOUT_PLANS[0];
     }
     if (exp === 'beginner') {
-      return WORKOUT_PLANS.find((p) => p.id === 'full_body_high_freq') || WORKOUT_PLANS[9];
+      return WORKOUT_PLANS.find((p) => p.id === 'zhuo_hardgainer_a') || WORKOUT_PLANS.find((p) => p.id === 'full_body_high_freq') || WORKOUT_PLANS[9];
     }
     if (exp === 'intermediate') {
-      return WORKOUT_PLANS.find((p) => p.id === 'upper_lower_upper') || WORKOUT_PLANS[6];
+      return WORKOUT_PLANS.find((p) => p.id === 'dah_3d_shoulders') || WORKOUT_PLANS.find((p) => p.id === 'upper_lower_upper') || WORKOUT_PLANS[6];
     }
-    return WORKOUT_PLANS.find((p) => p.id === 'ppl_push') || WORKOUT_PLANS[3];
+    return WORKOUT_PLANS.find((p) => p.id === 'dah_v_taper_chest_back') || WORKOUT_PLANS.find((p) => p.id === 'ppl_push') || WORKOUT_PLANS[3];
   }, [userProfile]);
 
-  // 2. 依據四大主 Tab 與過濾條件過濾清單
+  // 2. 依據六大主 Tab 與過濾條件過濾清單
   const filteredPlans = useMemo(() => {
     let list: WorkoutPlanPreset[] = [];
 
     if (activeMainTab === 'recommended') {
-      // 推薦維度：用戶專屬推薦 + 2 套最熱門入門課表
-      const topIds = [userRecommendedPlan.id, 'fat_loss_belly', 'full_body_high_freq'];
+      // 推薦維度：用戶專屬推薦 + 大H專項 + 卓叔增重 + 熱門入門
+      const topIds = [userRecommendedPlan.id, 'dah_3d_shoulders', 'zhuo_hardgainer_a', 'fat_loss_belly', 'full_body_high_freq'];
       list = WORKOUT_PLANS.filter((p) => topIds.includes(p.id));
+    } else if (activeMainTab === 'dah') {
+      // 大H 健體專項
+      list = WORKOUT_PLANS.filter((p) => p.category === 'DaH');
+    } else if (activeMainTab === 'zhuo') {
+      // 卓叔瘦人增重專項
+      list = WORKOUT_PLANS.filter((p) => p.category === 'ZhuoShu');
     } else if (activeMainTab === 'goals') {
       // 30日焦點專項（腹部、六塊肌、翹臀）
       list = WORKOUT_PLANS.filter((p) => p.category === 'SpecialFocus');
     } else if (activeMainTab === 'splits') {
       // 科學分化（PPL、Upper/Lower、BroSplit）
-      let splitList = WORKOUT_PLANS.filter((p) => p.category !== 'SpecialFocus');
+      let splitList = WORKOUT_PLANS.filter((p) => ['PPL', 'UpperLower', 'BroSplit'].includes(p.category));
       if (splitSubFilter === 'ppl') {
         splitList = splitList.filter((p) => p.category === 'PPL');
       } else if (splitSubFilter === 'upper_lower') {
@@ -101,20 +107,21 @@ export default function PlanSelectionView() {
 
     // 次級難度篩選
     if (levelFilter === 'beginner') {
-      list = list.filter((p) => p.level?.includes('新手') || p.level?.includes('全階段') || p.id === 'full_body_high_freq');
+      list = list.filter((p) => p.level?.includes('新手') || p.level?.includes('全階段') || p.level?.includes('瘦人') || p.id === 'full_body_high_freq');
     } else if (levelFilter === 'intermediate') {
-      list = list.filter((p) => p.level?.includes('中階') || p.level?.includes('科學進階') || p.category === 'UpperLower');
+      list = list.filter((p) => p.level?.includes('中階') || p.level?.includes('科學進階') || p.category === 'UpperLower' || p.category === 'DaH');
     } else if (levelFilter === 'advanced') {
       list = list.filter((p) => p.level?.includes('高階') || p.level?.includes('高強度') || p.category === 'PPL');
     }
 
-    // 關鍵字搜尋
+    // 關鍵字搜尋（支援教練名、肌群、動作、器材）
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
       list = WORKOUT_PLANS.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.shortTitle?.toLowerCase().includes(q) ||
+          p.coachName?.toLowerCase().includes(q) ||
           p.targetFocus.toLowerCase().includes(q) ||
           p.tagline?.toLowerCase().includes(q) ||
           p.equipment?.toLowerCase().includes(q)
@@ -213,12 +220,14 @@ export default function PlanSelectionView() {
         )}
 
         {/* ============================================================ */}
-        {/* 3. 四大核心維度分類標籤 (Main Category Segmented Control) */}
+        {/* 3. 六大核心維度分類標籤 (Main Category Scrollable Control) */}
         {/* ============================================================ */}
         {!searchQuery && (
-          <div className="grid grid-cols-4 gap-1 p-1 bg-slate-200/60 rounded-2xl text-xs font-bold">
+          <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/60 rounded-2xl text-xs font-bold overflow-x-auto scrollbar-none">
             {[
               { id: 'recommended', label: '為你推薦', icon: Sparkles },
+              { id: 'dah', label: '大H 健體', icon: Award, badge: 'PRO' },
+              { id: 'zhuo', label: '卓叔增重', icon: Flame, badge: '瘦子' },
               { id: 'goals', label: '30日專項', icon: Target },
               { id: 'splits', label: '科學分化', icon: Dumbbell },
               { id: 'home', label: '居家徒手', icon: Home },
@@ -232,10 +241,10 @@ export default function PlanSelectionView() {
                     setActiveMainTab(tab.id as MainTab);
                     setLevelFilter('all');
                   }}
-                  className={`py-2 px-1 rounded-xl flex flex-col items-center justify-center gap-0.5 transition-all cursor-pointer ${
+                  className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 relative ${
                     isActive
                       ? 'bg-white text-slate-900 shadow-xs font-black'
-                      : 'text-slate-500 hover:text-slate-800'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
                   }`}
                 >
                   <Icon
@@ -243,7 +252,12 @@ export default function PlanSelectionView() {
                       isActive ? 'text-[#00D09C]' : 'text-slate-400'
                     }`}
                   />
-                  <span className="text-[11px] whitespace-nowrap">{tab.label}</span>
+                  <span className="text-[11px] font-bold">{tab.label}</span>
+                  {tab.badge && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[8px] font-black bg-[#FF6B4A] text-white">
+                      {tab.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -280,7 +294,7 @@ export default function PlanSelectionView() {
             )}
 
             {/* 難度標籤切換 */}
-            {activeMainTab !== 'splits' && (
+            {activeMainTab !== 'splits' && activeMainTab !== 'dah' && activeMainTab !== 'zhuo' && (
               <div className="flex items-center gap-1.5 shrink-0">
                 {[
                   { id: 'all', label: '全部' },
@@ -306,7 +320,59 @@ export default function PlanSelectionView() {
         )}
 
         {/* ============================================================ */}
-        {/* 5. 專屬推薦首卡 (僅在「為你推薦」Tab 顯示) */}
+        {/* 5A. 大H 健體美學專項橫幅 (大H Tab) */}
+        {/* ============================================================ */}
+        {activeMainTab === 'dah' && !searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-3xl bg-linear-to-br from-amber-500/15 via-amber-500/5 to-white border border-amber-300 shadow-xs space-y-1.5"
+          >
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white shadow-2xs">
+                🏆 大H • IFBB PRO 健體自然職業選手
+              </span>
+              <span className="text-[11px] font-bold text-amber-800">
+                陳建昕 經典菜單
+              </span>
+            </div>
+            <h3 className="text-base font-black text-slate-900 tracking-tight">
+              極致 V-Taper 倒三角、3D 南瓜肩與受控慢離心
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              大H 訓練心法：「重質不重量、控制張力、拒絕盲目借力」。透過肩胛骨平面運動軌跡與 3 秒受控慢離心，在保護肩關節的前提下徹底榨乾目標肌群！
+            </p>
+          </motion.div>
+        )}
+
+        {/* ============================================================ */}
+        {/* 5B. 卓叔增重瘦人專項橫幅 (卓叔 Tab) */}
+        {/* ============================================================ */}
+        {activeMainTab === 'zhuo' && !searchQuery && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="p-4 rounded-3xl bg-linear-to-br from-orange-500/15 via-orange-500/5 to-white border border-orange-300 shadow-xs space-y-1.5"
+          >
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-orange-500 text-white shadow-2xs">
+                🍚 卓叔增重體系 • 瘦人增肌鼻祖
+              </span>
+              <span className="text-[11px] font-bold text-orange-800">
+                外胚型 / 怎麼吃都不胖專屬
+              </span>
+            </div>
+            <h3 className="text-base font-black text-slate-900 tracking-tight">
+              「瘦子增肌焚訣：練得越少，效果越好」
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              卓叔增重核心哲學：瘦人神經易疲勞、代謝高。每次只練 4 個大複合動作，嚴格控制在 38 分鐘內結束，專注把力氣練大，保護寶貴熱量盈餘！
+            </p>
+          </motion.div>
+        )}
+
+        {/* ============================================================ */}
+        {/* 5C. 專屬推薦首卡 (僅在「為你推薦」Tab 顯示) */}
         {/* ============================================================ */}
         {activeMainTab === 'recommended' && !searchQuery && (
           <motion.div
@@ -503,6 +569,11 @@ export default function PlanSelectionView() {
                       <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-slate-100 text-slate-700">
                         {plan.categoryLabel}
                       </span>
+                      {plan.coachName && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black bg-amber-500/15 text-amber-800 border border-amber-300/60 flex items-center gap-0.5">
+                          {plan.coachName.includes('大H') ? '🏆 大H專項' : '🍚 卓叔增重'}
+                        </span>
+                      )}
                       {plan.equipment && (
                         <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600">
                           {plan.equipment.includes('無需器材') ? '⚡ 徒手' : '🏋️ ' + plan.equipment.split('/')[0].trim()}
@@ -605,6 +676,11 @@ export default function PlanSelectionView() {
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-50 text-[#00A87E]">
                       {previewPlan.categoryLabel}
                     </span>
+                    {previewPlan.coachBadge && (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-800 border border-amber-200">
+                        {previewPlan.coachBadge}
+                      </span>
+                    )}
                     {session.plan_id === previewPlan.id && (
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-[#00D09C] text-white">
                         目前進行中

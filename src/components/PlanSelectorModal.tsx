@@ -25,10 +25,12 @@ export default function PlanSelectorModal({ isOpen, onClose }: PlanSelectorModal
   };
 
   const categories = [
+    { key: 'DaH', label: '🏆 大H 健體專項 (V-Taper/3D南瓜肩)' },
+    { key: 'ZhuoShu', label: '🍚 卓叔瘦人增重 (大複合動作/速戰速決)' },
     { key: 'SpecialFocus', label: '🔥 30日焦點專項 (腹部/臀部)' },
     { key: 'PPL', label: '推拉腿 (PPL)' },
     { key: 'UpperLower', label: '二分化 (Upper / Lower)' },
-    { key: 'BroSplit', label: '五分化 (Bro Split)' },
+    { key: 'BroSplit', label: '全身頻率 / 五分化' },
   ];
 
   return (

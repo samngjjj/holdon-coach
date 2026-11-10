@@ -827,7 +827,44 @@ export default function OnboardingFlowModal() {
                       <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-sky-400" />
                     </motion.div>
 
-                    {/* Choice 4: 30日焦點專項 (腹部 / 六塊腹肌 / 臀部) */}
+                    {/* Choice 4: 名人教練專項 (大H 健體 & 卓叔瘦人增重) */}
+                    <div className="grid grid-cols-2 gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleFinishWithPlan('dah_3d_shoulders')}
+                        className="p-2.5 rounded-2xl bg-amber-50/80 border border-amber-300 hover:border-amber-400 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] font-black bg-amber-500 text-white px-1.5 py-0.2 rounded">
+                            🏆 大H
+                          </span>
+                          <span className="text-[9px] font-bold text-amber-800">IFBB PRO</span>
+                        </div>
+                        <p className="text-xs font-black text-slate-900 group-hover:text-amber-700">
+                          3D南瓜肩與手臂
+                        </p>
+                        <p className="text-[10px] text-slate-500">V-Taper倒三角肩腰比</p>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleFinishWithPlan('zhuo_hardgainer_a')}
+                        className="p-2.5 rounded-2xl bg-orange-50/80 border border-orange-300 hover:border-orange-400 text-left transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-1 mb-0.5">
+                          <span className="text-[10px] font-black bg-orange-500 text-white px-1.5 py-0.2 rounded">
+                            🍚 卓叔
+                          </span>
+                          <span className="text-[9px] font-bold text-orange-800">瘦人增肌</span>
+                        </div>
+                        <p className="text-xs font-black text-slate-900 group-hover:text-orange-700">
+                          大動作黃金 A 日
+                        </p>
+                        <p className="text-[10px] text-slate-500">38分鐘速戰速決保熱量</p>
+                      </button>
+                    </div>
+
+                    {/* Choice 5: 30日焦點專項 (腹部 / 六塊腹肌 / 臀部) */}
                     <div className="grid grid-cols-3 gap-2 pt-0.5">
                       {[
                         { id: 'fat_loss_belly', name: '腹部減脂', emoji: '🔥' },
