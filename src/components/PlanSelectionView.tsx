@@ -5,13 +5,16 @@
 
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Flame,
   Zap,
   Check,
   ChevronRight,
+  ChevronLeft,
+  LayoutGrid,
+  SlidersHorizontal,
   ShieldCheck,
   Dumbbell,
   Clock,
@@ -33,6 +36,22 @@ import { WORKOUT_PLANS, type WorkoutPlanPreset } from '@/data/exercises';
 import ExerciseIllustration from './ExerciseIllustration';
 
 type MainTab = 'recommended' | 'dah' | 'zhuo' | 'goals' | 'splits' | 'home';
+
+interface MainCategoryTabItem {
+  id: MainTab;
+  label: string;
+  icon: any;
+  badge?: string;
+}
+
+const MAIN_TABS: MainCategoryTabItem[] = [
+  { id: 'recommended', label: '為你推薦', icon: Sparkles },
+  { id: 'dah', label: '大H 健體', icon: Award, badge: 'PRO' },
+  { id: 'zhuo', label: '卓叔增重', icon: Flame, badge: '瘦子' },
+  { id: 'goals', label: '30日專項', icon: Target },
+  { id: 'splits', label: '科學分化', icon: Dumbbell },
+  { id: 'home', label: '居家徒手', icon: Home },
+];
 type LevelFilter = 'all' | 'beginner' | 'intermediate' | 'advanced';
 type SplitFilter = 'all' | 'ppl' | 'upper_lower' | 'bro';
 
@@ -46,6 +65,70 @@ export default function PlanSelectionView() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [previewPlan, setPreviewPlan] = useState<WorkoutPlanPreset | null>(null);
   const [showScientificPrinciples, setShowScientificPrinciples] = useState<boolean>(false);
+
+  // View mode for category tabs: grid (3x2, all 6 visible) vs scroll (horizontal single row)
+  const [isGridMode, setIsGridMode] = useState<boolean>(true); // Default to grid so all 6 are 100% visible!
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
+  const [canScrollRight, setCanScrollRight] = useState<boolean>(true);
+
+  // Mouse drag-to-scroll states
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollStartLeft, setScrollStartLeft] = useState(0);
+
+  const checkScrollBounds = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    checkScrollBounds();
+  }, [isGridMode, checkScrollBounds]);
+
+  const handleScrollLeft = () => {
+    if (!scrollContainerRef.current) return;
+    scrollContainerRef.current.scrollBy({ left: -180, behavior: 'smooth' });
+    setTimeout(checkScrollBounds, 300);
+  };
+
+  const handleScrollRight = () => {
+    if (!scrollContainerRef.current) return;
+    scrollContainerRef.current.scrollBy({ left: 180, behavior: 'smooth' });
+    setTimeout(checkScrollBounds, 300);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!scrollContainerRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - scrollContainerRef.current.offsetLeft);
+    setScrollStartLeft(scrollContainerRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !scrollContainerRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollContainerRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    scrollContainerRef.current.scrollLeft = scrollStartLeft - walk;
+    checkScrollBounds();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    setIsDragging(false);
+    checkScrollBounds();
+  };
+
+  // Wheel horizontal scrolling handler
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!scrollContainerRef.current) return;
+    if (e.deltaY !== 0) {
+      scrollContainerRef.current.scrollLeft += e.deltaY;
+      checkScrollBounds();
+    }
+  };
 
   // Active current plan object
   const currentPlan = useMemo(
@@ -220,55 +303,165 @@ export default function PlanSelectionView() {
         )}
 
         {/* ============================================================ */}
-        {/* 3. 六大核心維度分類標籤 (Main Category Scrollable Control) */}
+        {/* 3. 六大核心維度分類標籤 (Main Category Tabs — 3×2 全展開 + 完整平滑滑動功能) */}
         {/* ============================================================ */}
         {!searchQuery && (
-          <div className="flex items-center gap-1.5 p-1.5 bg-slate-200/60 rounded-2xl text-xs font-bold overflow-x-auto scrollbar-none">
-            {[
-              { id: 'recommended', label: '為你推薦', icon: Sparkles },
-              { id: 'dah', label: '大H 健體', icon: Award, badge: 'PRO' },
-              { id: 'zhuo', label: '卓叔增重', icon: Flame, badge: '瘦子' },
-              { id: 'goals', label: '30日專項', icon: Target },
-              { id: 'splits', label: '科學分化', icon: Dumbbell },
-              { id: 'home', label: '居家徒手', icon: Home },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeMainTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveMainTab(tab.id as MainTab);
-                    setLevelFilter('all');
-                  }}
-                  className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 relative ${
-                    isActive
-                      ? 'bg-white text-slate-900 shadow-xs font-black'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/40'
+          <div className="space-y-1.5">
+            {/* Header with Title and Grid/Scroll Mode Switcher */}
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-1.5 text-xs font-black text-slate-700">
+                <Sparkles className="w-3.5 h-3.5 text-[#00D09C]" />
+                <span>精選專區分類 (全 6 大課表類別)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsGridMode(!isGridMode)}
+                className="text-[11px] font-bold text-slate-600 hover:text-slate-900 bg-white/90 hover:bg-white px-2.5 py-1 rounded-full border border-slate-200 shadow-2xs flex items-center gap-1.5 transition-all cursor-pointer active:scale-95"
+                title={isGridMode ? '切換為單行左右滑動模式' : '展開全部 6 大分類平鋪 (3×2)'}
+              >
+                {isGridMode ? (
+                  <>
+                    <SlidersHorizontal className="w-3 h-3 text-[#00D09C]" />
+                    <span>切換橫滑模式</span>
+                  </>
+                ) : (
+                  <>
+                    <LayoutGrid className="w-3 h-3 text-[#00D09C]" />
+                    <span>展開全部分類 (3×2)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Mode 1: 3x2 Clean Grid — ALL 6 TABS ARE 100% VISIBLE AT ONCE! NO SCROLLING NEEDED */}
+            {isGridMode ? (
+              <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-slate-200/70 rounded-2xl text-xs font-bold shadow-inner">
+                {MAIN_TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeMainTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveMainTab(tab.id as MainTab);
+                        setLevelFilter('all');
+                      }}
+                      className={`py-2 px-1.5 rounded-xl flex items-center justify-center gap-1 transition-all cursor-pointer text-center relative select-none ${
+                        isActive
+                          ? 'bg-white text-slate-900 shadow-sm font-black ring-1 ring-slate-900/10'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                      }`}
+                    >
+                      <Icon
+                        className={`w-3.5 h-3.5 shrink-0 ${
+                          isActive ? 'text-[#00D09C]' : 'text-slate-400'
+                        }`}
+                      />
+                      <span className="text-[11px] font-bold truncate">{tab.label}</span>
+                      {tab.badge && (
+                        <span className="px-1 py-0.2 rounded-full text-[8px] font-black bg-[#FF6B4A] text-white shrink-0 leading-none">
+                          {tab.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Mode 2: Horizontal Slide Bar with Arrow Buttons, Wheel Scroll & Drag */
+              <div className="relative group">
+                {/* Left Scroll Button */}
+                {canScrollLeft && (
+                  <button
+                    type="button"
+                    onClick={handleScrollLeft}
+                    className="absolute -left-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-[#00D09C] transition-all cursor-pointer active:scale-90"
+                    title="向左滑動"
+                  >
+                    <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                )}
+
+                {/* Right Scroll Button */}
+                {canScrollRight && (
+                  <button
+                    type="button"
+                    onClick={handleScrollRight}
+                    className="absolute -right-2 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white shadow-md border border-slate-200 flex items-center justify-center text-slate-700 hover:text-[#00D09C] transition-all cursor-pointer active:scale-90"
+                    title="向右滑動（查看科學分化與居家徒手）"
+                  >
+                    <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                )}
+
+                {/* Scrollable Container with onWheel & Mouse Drag */}
+                <div
+                  ref={scrollContainerRef}
+                  onScroll={checkScrollBounds}
+                  onWheel={handleWheelScroll}
+                  onMouseDown={handleMouseDown}
+                  onMouseMove={handleMouseMove}
+                  onMouseUp={handleMouseUpOrLeave}
+                  onMouseLeave={handleMouseUpOrLeave}
+                  className={`flex items-center gap-1.5 p-1.5 bg-slate-200/70 rounded-2xl text-xs font-bold overflow-x-auto select-none touch-pan-x transition-colors ${
+                    isDragging ? 'cursor-grabbing' : 'cursor-grab'
                   }`}
+                  style={{
+                    scrollbarWidth: 'thin',
+                    WebkitOverflowScrolling: 'touch',
+                  }}
                 >
-                  <Icon
-                    className={`w-3.5 h-3.5 ${
-                      isActive ? 'text-[#00D09C]' : 'text-slate-400'
-                    }`}
-                  />
-                  <span className="text-[11px] font-bold">{tab.label}</span>
-                  {tab.badge && (
-                    <span className="px-1.5 py-0.2 rounded-full text-[8px] font-black bg-[#FF6B4A] text-white">
-                      {tab.badge}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
+                  {MAIN_TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeMainTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => {
+                          setActiveMainTab(tab.id as MainTab);
+                          setLevelFilter('all');
+                        }}
+                        className={`py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap shrink-0 relative ${
+                          isActive
+                            ? 'bg-white text-slate-900 shadow-xs font-black'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                        }`}
+                      >
+                        <Icon
+                          className={`w-3.5 h-3.5 ${
+                            isActive ? 'text-[#00D09C]' : 'text-slate-400'
+                          }`}
+                        />
+                        <span className="text-[11px] font-bold">{tab.label}</span>
+                        {tab.badge && (
+                          <span className="px-1.5 py-0.2 rounded-full text-[8px] font-black bg-[#FF6B4A] text-white">
+                            {tab.badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* ============================================================ */}
-        {/* 4. 次級次要篩選膠囊 (Sub-filter Bar) */}
+        {/* 4. 次級次要篩選膠囊 (Sub-filter Bar — 支援滑輪左右滾動) */}
         {/* ============================================================ */}
         {!searchQuery && (
-          <div className="flex items-center justify-between gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+          <div
+            onWheel={(e) => {
+              if (e.deltaY !== 0) {
+                e.currentTarget.scrollLeft += e.deltaY;
+              }
+            }}
+            className="flex items-center justify-between gap-1.5 overflow-x-auto pb-1 touch-pan-x"
+            style={{ scrollbarWidth: 'none' }}
+          >
             {/* 分化課表子類 (PPL / Upper Lower / Bro) */}
             {activeMainTab === 'splits' && (
               <div className="flex items-center gap-1.5 shrink-0">

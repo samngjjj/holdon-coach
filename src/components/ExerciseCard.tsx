@@ -267,8 +267,16 @@ export default function ExerciseCard() {
           </div>
         </div>
 
-        {/* Scrollable Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {/* Scrollable Pills with mouse-wheel and touch horizontal scroll support */}
+        <div
+          onWheel={(e) => {
+            if (e.deltaY !== 0) {
+              e.currentTarget.scrollLeft += e.deltaY;
+            }
+          }}
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 touch-pan-x"
+          style={{ scrollbarWidth: 'none' }}
+        >
           {session.exercises.map((ex, idx) => {
             const isCurrent = idx === currentExerciseIndex;
             return (
