@@ -251,6 +251,13 @@ interface WorkoutState {
   selectPlan: (planId: string) => void;
   completeSet: (repsCompleted: number, rpe: number, customWeight?: number) => void;
   addSetToCurrentExercise: () => void;
+  removeSetFromCurrentExercise: (setIndex?: number) => void;
+  updateSetRecordInHistory: (
+    exerciseId: string,
+    setNumber: number,
+    partial: { weight_kg?: number; reps_completed?: number; rpe?: number }
+  ) => void;
+  updateCurrentExerciseTarget: (partial: { weight_kg?: number; reps?: number }) => void;
   dropWeightManually: (reason?: string) => void;
   reportPain: (location: string) => void;
   startRest: () => void;
@@ -945,6 +952,98 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       session: {
         ...state.session,
         exercises: updated,
+      },
+    });
+  },
+
+  removeSetFromCurrentExercise: (setIndex?: number) => {
+    const state = get();
+    const exercise = state.session.exercises[state.currentExerciseIndex];
+    if (!exercise || exercise.total_sets <= 1) return;
+
+    const updated = [...state.session.exercises];
+    const targetSetNum = setIndex !== undefined ? setIndex : exercise.total_sets;
+
+    // Find if this set was logged and subtract volume
+    const loggedItem = state.setHistory.find(
+      (r) => r.exerciseId === exercise.exercise_id && r.setNumber === targetSetNum
+    );
+    const volToSubtract = loggedItem ? loggedItem.weight_kg * loggedItem.reps_completed : 0;
+
+    // Filter out this set from history and re-number subsequent sets of this exercise
+    const updatedHistory = state.setHistory
+      .filter((r) => !(r.exerciseId === exercise.exercise_id && r.setNumber === targetSetNum))
+      .map((r) => {
+        if (r.exerciseId === exercise.exercise_id && r.setNumber > targetSetNum) {
+          return { ...r, setNumber: r.setNumber - 1 };
+        }
+        return r;
+      });
+
+    const newTotalSets = Math.max(1, exercise.total_sets - 1);
+    updated[state.currentExerciseIndex] = {
+      ...exercise,
+      total_sets: newTotalSets,
+    };
+
+    const newCurrentSet = Math.min(state.currentSet, newTotalSets);
+
+    set({
+      currentSet: newCurrentSet,
+      setHistory: updatedHistory,
+      totalVolumeKg: Math.max(0, state.totalVolumeKg - volToSubtract),
+      session: {
+        ...state.session,
+        exercises: updated,
+      },
+    });
+  },
+
+  updateSetRecordInHistory: (exerciseId, setNumber, partial) => {
+    const state = get();
+    let volumeDiff = 0;
+    const updatedHistory = state.setHistory.map((r) => {
+      if (r.exerciseId === exerciseId && r.setNumber === setNumber) {
+        const oldVol = r.weight_kg * r.reps_completed;
+        const newWeight = partial.weight_kg !== undefined ? partial.weight_kg : r.weight_kg;
+        const newReps = partial.reps_completed !== undefined ? partial.reps_completed : r.reps_completed;
+        const newVol = newWeight * newReps;
+        volumeDiff = newVol - oldVol;
+        return {
+          ...r,
+          ...partial,
+          weight_kg: newWeight,
+          reps_completed: newReps,
+        };
+      }
+      return r;
+    });
+
+    set({
+      setHistory: updatedHistory,
+      totalVolumeKg: Math.max(0, state.totalVolumeKg + volumeDiff),
+    });
+  },
+
+  updateCurrentExerciseTarget: (partial) => {
+    const state = get();
+    const exercise = state.session.exercises[state.currentExerciseIndex];
+    if (!exercise) return;
+
+    const updatedExercises = [...state.session.exercises];
+    updatedExercises[state.currentExerciseIndex] = {
+      ...exercise,
+      target_load: {
+        ...exercise.target_load,
+        weight_kg: partial.weight_kg !== undefined ? partial.weight_kg : exercise.target_load.weight_kg,
+        reps: partial.reps !== undefined ? partial.reps : exercise.target_load.reps,
+      },
+    };
+
+    set({
+      session: {
+        ...state.session,
+        exercises: updatedExercises,
       },
     });
   },

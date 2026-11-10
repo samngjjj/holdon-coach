@@ -23,6 +23,8 @@ import {
   Volume2,
   Plus,
   Clock,
+  Trash2,
+  Minus,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { useVoiceListener } from '@/hooks/useVoiceListener';
@@ -53,6 +55,9 @@ export default function ExerciseCard() {
     totalVolumeKg,
     setHistory,
     addSetToCurrentExercise,
+    removeSetFromCurrentExercise,
+    updateSetRecordInHistory,
+    updateCurrentExerciseTarget,
   } = useWorkoutStore();
 
   const exercise = session.exercises[currentExerciseIndex];
@@ -60,14 +65,35 @@ export default function ExerciseCard() {
   const [lastVoiceText, setLastVoiceText] = useState<string>('');
   const [showVideoModal, setShowVideoModal] = useState<boolean>(false);
 
+  // Per-set inline editing states for typing freedom (KG & REPS)
+  const [editingWeight, setEditingWeight] = useState<Record<number, string>>({});
+  const [editingReps, setEditingReps] = useState<Record<number, string>>({});
+  const [customSetLoads, setCustomSetLoads] = useState<Record<number, { weight?: number; reps?: number }>>({});
+
   const exerciseRecords = setHistory.filter((r) => r.exerciseId === exercise?.exercise_id);
 
-  // Synchronize stepper whenever set advances or target reps calibrate
+  // Reset local editing when switching exercises
   useEffect(() => {
-    if (exercise?.target_load?.reps) {
+    setEditingWeight({});
+    setEditingReps({});
+    setCustomSetLoads({});
+  }, [exercise?.exercise_id]);
+
+  // Synchronize stepper and custom set loads whenever set advances or target reps calibrate
+  useEffect(() => {
+    if (customSetLoads[currentSet]) {
+      const nextCustom = customSetLoads[currentSet];
+      if (nextCustom.weight !== undefined) {
+        updateCurrentExerciseTarget({ weight_kg: nextCustom.weight });
+      }
+      if (nextCustom.reps !== undefined) {
+        setCompletedReps(nextCustom.reps);
+        updateCurrentExerciseTarget({ reps: nextCustom.reps });
+      }
+    } else if (exercise?.target_load?.reps) {
       setCompletedReps(exercise.target_load.reps);
     }
-  }, [currentSet, currentExerciseIndex, exercise?.exercise_id, exercise?.target_load?.reps]);
+  }, [currentSet, currentExerciseIndex, exercise?.exercise_id]);
 
   const handleVoice = useCallback(
     (transcript: string) => {
@@ -91,7 +117,101 @@ export default function ExerciseCard() {
   };
 
   const handleRPESubmit = (rpe: number) => {
-    completeSet(completedReps, rpe);
+    const currentWeight =
+      editingWeight[currentSet] !== undefined && !isNaN(parseFloat(editingWeight[currentSet]))
+        ? parseFloat(editingWeight[currentSet])
+        : exercise.target_load.weight_kg;
+
+    completeSet(completedReps, rpe, currentWeight);
+
+    // Clean up local draft for this completed set
+    setEditingWeight((prev) => {
+      const next = { ...prev };
+      delete next[currentSet];
+      return next;
+    });
+    setEditingReps((prev) => {
+      const next = { ...prev };
+      delete next[currentSet];
+      return next;
+    });
+  };
+
+  // Editable input handlers
+  const handleWeightInputChange = (
+    setNum: number,
+    rawVal: string,
+    isDone: boolean,
+    isCurrent: boolean
+  ) => {
+    setEditingWeight((prev) => ({ ...prev, [setNum]: rawVal }));
+    const parsed = parseFloat(rawVal);
+    if (!isNaN(parsed) && parsed >= 0) {
+      if (isDone) {
+        updateSetRecordInHistory(exercise.exercise_id, setNum, { weight_kg: parsed });
+      } else if (isCurrent) {
+        updateCurrentExerciseTarget({ weight_kg: parsed });
+      } else {
+        setCustomSetLoads((prev) => ({
+          ...prev,
+          [setNum]: { ...prev[setNum], weight: parsed },
+        }));
+      }
+    }
+  };
+
+  const handleWeightBlur = (setNum: number) => {
+    setEditingWeight((prev) => {
+      const next = { ...prev };
+      delete next[setNum];
+      return next;
+    });
+  };
+
+  const handleRepsInputChange = (
+    setNum: number,
+    rawVal: string,
+    isDone: boolean,
+    isCurrent: boolean
+  ) => {
+    setEditingReps((prev) => ({ ...prev, [setNum]: rawVal }));
+    const parsed = parseInt(rawVal, 10);
+    if (!isNaN(parsed) && parsed > 0) {
+      if (isDone) {
+        updateSetRecordInHistory(exercise.exercise_id, setNum, { reps_completed: parsed });
+      } else if (isCurrent) {
+        setCompletedReps(parsed);
+        updateCurrentExerciseTarget({ reps: parsed });
+      } else {
+        setCustomSetLoads((prev) => ({
+          ...prev,
+          [setNum]: { ...prev[setNum], reps: parsed },
+        }));
+      }
+    }
+  };
+
+  const handleRepsBlur = (setNum: number) => {
+    setEditingReps((prev) => {
+      const next = { ...prev };
+      delete next[setNum];
+      return next;
+    });
+  };
+
+  const handleDeleteSet = (setNum: number) => {
+    if (exercise.total_sets <= 1) return;
+    removeSetFromCurrentExercise(setNum);
+    setEditingWeight((prev) => {
+      const next = { ...prev };
+      delete next[setNum];
+      return next;
+    });
+    setEditingReps((prev) => {
+      const next = { ...prev };
+      delete next[setNum];
+      return next;
+    });
   };
 
   const isNeutral = safetyTier >= 1 || exercise.grip_type.includes('中立') || exercise.grip_type.includes('對握');
@@ -304,18 +424,19 @@ export default function ExerciseCard() {
               </span>
             </div>
 
-            {/* Table Header: SET | PREVIOUS | KG | REPS | RPE | ✓ */}
-            <div className="grid grid-cols-12 gap-1 py-1.5 px-3 bg-slate-100/60 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center items-center">
-              <div className="col-span-2 text-left pl-0.5">組別</div>
-              <div className="col-span-3">上次紀錄</div>
-              <div className="col-span-2">公斤</div>
-              <div className="col-span-2">次數</div>
-              <div className="col-span-2">RPE</div>
-              <div className="col-span-1">完成</div>
+            {/* Table Header: SET | PREVIOUS | KG | REPS | RPE | ✓ | DEL */}
+            <div className="grid grid-cols-12 gap-1 py-1.5 px-2 bg-slate-100/60 text-[10px] font-black text-slate-400 uppercase tracking-wider text-center items-center">
+              <div className="col-span-1 text-center">組別</div>
+              <div className="col-span-3 text-center">上次紀錄</div>
+              <div className="col-span-2 text-center">公斤</div>
+              <div className="col-span-2 text-center">次數</div>
+              <div className="col-span-2 text-center">RPE</div>
+              <div className="col-span-1 text-center">完成</div>
+              <div className="col-span-1 text-center">刪除</div>
             </div>
 
-            {/* Table Rows */}
-            <div className="divide-y divide-slate-100 px-2 py-1">
+            {/* Table Rows with Freely Editable Weight & Reps */}
+            <div className="divide-y divide-slate-100 px-1.5 py-1">
               {Array.from({ length: exercise.total_sets }).map((_, idx) => {
                 const setNum = idx + 1;
                 const historyItem = exerciseRecords.find((r) => r.setNumber === setNum);
@@ -323,10 +444,28 @@ export default function ExerciseCard() {
                 const isCurrent = setNum === currentSet;
                 const isWarmup = setNum === 1 && exercise.total_sets >= 4;
 
+                const displayWeight =
+                  editingWeight[setNum] !== undefined
+                    ? editingWeight[setNum]
+                    : isDone
+                    ? `${historyItem.weight_kg}`
+                    : isCurrent
+                    ? `${exercise.target_load.weight_kg}`
+                    : `${customSetLoads[setNum]?.weight ?? exercise.target_load.weight_kg}`;
+
+                const displayReps =
+                  editingReps[setNum] !== undefined
+                    ? editingReps[setNum]
+                    : isDone
+                    ? `${historyItem.reps_completed}`
+                    : isCurrent
+                    ? `${completedReps}`
+                    : `${customSetLoads[setNum]?.reps ?? exercise.target_load.reps}`;
+
                 return (
                   <div
                     key={setNum}
-                    className={`grid grid-cols-12 gap-1 py-1.5 px-1.5 rounded-xl items-center text-xs transition-all my-0.5 ${
+                    className={`grid grid-cols-12 gap-1 py-1.5 px-1 rounded-xl items-center text-xs transition-all my-0.5 ${
                       isDone
                         ? 'bg-[#00D09C]/15 border border-[#00D09C]/30 text-slate-900'
                         : isCurrent
@@ -335,7 +474,7 @@ export default function ExerciseCard() {
                     }`}
                   >
                     {/* Set Tag */}
-                    <div className="col-span-2 pl-0.5 font-black flex items-center gap-1">
+                    <div className="col-span-1 flex justify-center font-black">
                       <span
                         className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-mono font-bold ${
                           isDone
@@ -350,24 +489,60 @@ export default function ExerciseCard() {
                     </div>
 
                     {/* Previous record */}
-                    <div className="col-span-3 text-center text-[11px] font-mono text-slate-400">
+                    <div className="col-span-3 text-center text-[11px] font-mono text-slate-400 truncate">
                       {Math.max(10, exercise.target_load.weight_kg - 2)}kg × 10
                     </div>
 
-                    {/* KG */}
-                    <div className="col-span-2 text-center font-mono font-bold text-slate-800">
-                      {isDone ? `${historyItem.weight_kg}` : `${exercise.target_load.weight_kg}`}
+                    {/* KG Input (Freely Editable) */}
+                    <div className="col-span-2 flex justify-center">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.5"
+                        min="0"
+                        max="500"
+                        value={displayWeight}
+                        onChange={(e) => handleWeightInputChange(setNum, e.target.value, isDone, isCurrent)}
+                        onBlur={() => handleWeightBlur(setNum)}
+                        onFocus={(e) => e.target.select()}
+                        aria-label={`第 ${setNum} 組重量(公斤)`}
+                        className={`w-full py-1 px-0.5 rounded-lg text-center font-mono font-bold text-xs transition-all outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                          isDone
+                            ? 'bg-white/90 border border-emerald-300 text-emerald-950 font-black shadow-2xs focus:ring-2 focus:ring-[#00D09C]'
+                            : isCurrent
+                            ? 'bg-white border-2 border-[#00D09C] text-slate-900 font-black shadow-2xs focus:ring-2 focus:ring-[#00D09C]'
+                            : 'bg-slate-100/90 hover:bg-slate-200/70 text-slate-700 border border-slate-200/80 focus:bg-white focus:border-[#00D09C] focus:ring-2 focus:ring-[#00D09C]/30'
+                        }`}
+                      />
                     </div>
 
-                    {/* REPS */}
-                    <div className="col-span-2 text-center font-mono font-bold text-slate-800">
-                      {isDone ? `${historyItem.reps_completed}` : isCurrent ? `${completedReps}` : `${exercise.target_load.reps}`}
+                    {/* REPS Input (Freely Editable) */}
+                    <div className="col-span-2 flex justify-center">
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        step="1"
+                        min="1"
+                        max="100"
+                        value={displayReps}
+                        onChange={(e) => handleRepsInputChange(setNum, e.target.value, isDone, isCurrent)}
+                        onBlur={() => handleRepsBlur(setNum)}
+                        onFocus={(e) => e.target.select()}
+                        aria-label={`第 ${setNum} 組次數`}
+                        className={`w-full py-1 px-0.5 rounded-lg text-center font-mono font-bold text-xs transition-all outline-hidden [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                          isDone
+                            ? 'bg-white/90 border border-emerald-300 text-emerald-950 font-black shadow-2xs focus:ring-2 focus:ring-[#00D09C]'
+                            : isCurrent
+                            ? 'bg-white border-2 border-[#00D09C] text-slate-900 font-black shadow-2xs focus:ring-2 focus:ring-[#00D09C]'
+                            : 'bg-slate-100/90 hover:bg-slate-200/70 text-slate-700 border border-slate-200/80 focus:bg-white focus:border-[#00D09C] focus:ring-2 focus:ring-[#00D09C]/30'
+                        }`}
+                      />
                     </div>
 
                     {/* RPE */}
                     <div className="col-span-2 text-center">
                       <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+                        className={`px-1 py-0.5 rounded text-[10px] font-mono font-bold block truncate ${
                           isDone
                             ? 'bg-white/80 text-emerald-800 shadow-2xs'
                             : isCurrent
@@ -387,6 +562,7 @@ export default function ExerciseCard() {
                         </div>
                       ) : isCurrent ? (
                         <button
+                          type="button"
                           onClick={handleComplete}
                           className="w-5 h-5 rounded-md bg-[#00D09C] hover:bg-[#00B98A] text-white flex items-center justify-center shadow-sm cursor-pointer active:scale-90 transition-transform"
                           title="完成當前組"
@@ -397,20 +573,50 @@ export default function ExerciseCard() {
                         <div className="w-5 h-5 rounded-md border border-slate-200" />
                       )}
                     </div>
+
+                    {/* Delete Set Button */}
+                    <div className="col-span-1 flex justify-center">
+                      {exercise.total_sets > 1 ? (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteSet(setNum)}
+                          className="w-5 h-5 rounded-md hover:bg-rose-100/80 text-slate-300 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer group"
+                          title={`刪除第 ${setNum} 組`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+                        </button>
+                      ) : (
+                        <span className="w-5 h-5 block" />
+                      )}
+                    </div>
                   </div>
                 );
               })}
             </div>
 
-            {/* + Add Set Button */}
-            <div className="p-1.5 bg-slate-50/50 border-t border-slate-100">
+            {/* Bottom Actions: + 新增一組 & - 刪除一組 */}
+            <div className="p-2 bg-slate-50/50 border-t border-slate-100 flex items-center gap-2">
               <button
                 type="button"
                 onClick={addSetToCurrentExercise}
-                className="w-full py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-900 text-[11px] font-bold flex items-center justify-center gap-1 transition-colors shadow-2xs"
+                className="flex-1 py-1.5 px-2 rounded-xl bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 hover:text-slate-900 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs cursor-pointer active:scale-98"
               >
                 <Plus className="w-3.5 h-3.5 text-[#00D09C]" />
                 <span>+ 新增一組 (Add Set)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => removeSetFromCurrentExercise()}
+                disabled={exercise.total_sets <= 1}
+                className={`flex-1 py-1.5 px-2 rounded-xl border text-[11px] font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs ${
+                  exercise.total_sets <= 1
+                    ? 'bg-slate-100/60 border-slate-200/60 text-slate-300 cursor-not-allowed'
+                    : 'bg-white hover:bg-rose-50 border-slate-200 hover:border-rose-200 text-slate-600 hover:text-rose-600 cursor-pointer active:scale-98'
+                }`}
+                title={exercise.total_sets <= 1 ? '最少需保留 1 組' : '刪除最後一組'}
+              >
+                <Minus className="w-3.5 h-3.5 text-rose-500" />
+                <span>- 刪除一組 (Remove Set)</span>
               </button>
             </div>
           </div>
@@ -418,8 +624,12 @@ export default function ExerciseCard() {
           {/* Actual Reps Stepper Counter */}
           <div className="flex items-center gap-3 mt-2 mb-3 bg-slate-50 border border-slate-200/80 rounded-2xl p-1.5 px-3">
             <button
-              onClick={() => setCompletedReps(Math.max(1, completedReps - 1))}
-              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all"
+              onClick={() => {
+                const nextReps = Math.max(1, completedReps - 1);
+                setCompletedReps(nextReps);
+                updateCurrentExerciseTarget({ reps: nextReps });
+              }}
+              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
             >
               −
             </button>
@@ -430,8 +640,12 @@ export default function ExerciseCard() {
               </span>
             </div>
             <button
-              onClick={() => setCompletedReps(Math.min(30, completedReps + 1))}
-              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all"
+              onClick={() => {
+                const nextReps = Math.min(30, completedReps + 1);
+                setCompletedReps(nextReps);
+                updateCurrentExerciseTarget({ reps: nextReps });
+              }}
+              className="w-8 h-8 rounded-xl bg-white text-slate-600 font-bold text-lg flex items-center justify-center shadow-sm hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
             >
               +
             </button>
@@ -441,8 +655,12 @@ export default function ExerciseCard() {
           <div className="w-full flex items-center justify-center gap-8 pt-2 pb-1">
             {/* Previous set arrow */}
             <button
-              onClick={() => setCompletedReps(Math.max(1, completedReps - 1))}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
+              onClick={() => {
+                const nextReps = Math.max(1, completedReps - 1);
+                setCompletedReps(nextReps);
+                updateCurrentExerciseTarget({ reps: nextReps });
+              }}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
               title="調降次數"
             >
               <ChevronLeft className="w-7 h-7" />
@@ -461,8 +679,12 @@ export default function ExerciseCard() {
 
             {/* Next set arrow */}
             <button
-              onClick={() => setCompletedReps(Math.min(30, completedReps + 1))}
-              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
+              onClick={() => {
+                const nextReps = Math.min(30, completedReps + 1);
+                setCompletedReps(nextReps);
+                updateCurrentExerciseTarget({ reps: nextReps });
+              }}
+              className="w-10 h-10 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors cursor-pointer"
               title="提高次數"
             >
               <ChevronRight className="w-7 h-7" />
