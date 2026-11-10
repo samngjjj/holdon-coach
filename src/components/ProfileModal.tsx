@@ -8,12 +8,18 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Activity, X, Check } from 'lucide-react';
+import { User, Activity, X, Check, RotateCcw } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 import { calculateProfileStats, type UserProfile } from '@/data/exercises';
 
 export default function ProfileModal() {
-  const { userProfile, showProfileModal, setShowProfileModal, updateUserProfile } = useWorkoutStore();
+  const {
+    userProfile,
+    showProfileModal,
+    setShowProfileModal,
+    updateUserProfile,
+    restartOnboarding,
+  } = useWorkoutStore();
 
   const [form, setForm] = useState<UserProfile>({ ...userProfile });
 
@@ -248,13 +254,25 @@ export default function ProfileModal() {
             </div>
 
             {/* Submit */}
-            <div className="pt-2">
+            <div className="pt-2 space-y-2">
               <button
                 type="submit"
                 className="w-full py-3.5 rounded-2xl bg-[#00D09C] hover:bg-[#00B98A] text-white font-extrabold flex items-center justify-center gap-2 shadow-lg shadow-[#00D09C]/25 active:scale-[0.98] transition-all"
               >
                 <Check className="w-5 h-5" />
                 儲存個人檔案並客製化課表
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowProfileModal(false);
+                  restartOnboarding();
+                }}
+                className="w-full py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                <span>重新進行「新用戶程度與課表導引」流程</span>
               </button>
             </div>
           </form>

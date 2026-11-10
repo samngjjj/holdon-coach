@@ -217,6 +217,17 @@ interface WorkoutState {
   muscleRecoveries: MuscleGroupRecovery[];
   updateMuscleRecoveryAfterWorkout: (planId: string) => void;
 
+  // User Onboarding Flow (新手第一次登入完整導引)
+  hasCompletedOnboarding: boolean;
+  showOnboardingModal: boolean;
+  setShowOnboardingModal: (show: boolean) => void;
+  completeOnboarding: (
+    profile: Partial<UserProfile>,
+    chosenPlanId?: string,
+    openEditor?: boolean
+  ) => void;
+  restartOnboarding: () => void;
+
   // History & Trends
   history: WorkoutHistoryEntry[];
 
@@ -299,6 +310,15 @@ function getStoredDiet(): DailyDietRecord {
     return raw ? JSON.parse(raw) : INITIAL_TODAY_DIET;
   } catch {
     return INITIAL_TODAY_DIET;
+  }
+}
+
+function getStoredOnboardingStatus(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return localStorage.getItem('holdon_completed_onboarding') === 'true';
+  } catch {
+    return false;
   }
 }
 
@@ -647,6 +667,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     const isCore = planId.includes('belly') || planId.includes('abs') || planId.includes('fat_loss');
     const isUpper = planId.includes('upper');
     const isLower = planId.includes('lower');
+    const isFullBody = planId.includes('full_body');
 
     const updated = list.map((m) => {
       let isTargeted = false;
@@ -656,6 +677,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       if (isCore && m.id === 'core') isTargeted = true;
       if (isUpper && (m.id === 'chest' || m.id === 'back' || m.id === 'deltoids' || m.id === 'biceps' || m.id === 'triceps')) isTargeted = true;
       if (isLower && (m.id === 'quads' || m.id === 'hamstrings_glutes' || m.id === 'core')) isTargeted = true;
+      if (isFullBody) isTargeted = true;
 
       if (isTargeted) {
         return {
@@ -671,6 +693,41 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
     });
 
     set({ muscleRecoveries: updated });
+  },
+
+  // User Onboarding Flow (新手第一次登入完整導引)
+  hasCompletedOnboarding: getStoredOnboardingStatus(),
+  showOnboardingModal: false,
+  setShowOnboardingModal: (show) => set({ showOnboardingModal: show }),
+  completeOnboarding: (profilePartial, chosenPlanId, openEditor) => {
+    const currentProfile = get().userProfile;
+    const updatedProfile = { ...currentProfile, ...profilePartial };
+    try {
+      localStorage.setItem('holdon_user_profile', JSON.stringify(updatedProfile));
+      localStorage.setItem('holdon_completed_onboarding', 'true');
+    } catch {}
+
+    get().updateUserProfile(profilePartial);
+
+    if (chosenPlanId) {
+      get().selectPlan(chosenPlanId);
+    }
+
+    set({
+      hasCompletedOnboarding: true,
+      showOnboardingModal: false,
+      activeTab: 'workout',
+      showPlanEditorModal: !!openEditor,
+    });
+  },
+  restartOnboarding: () => {
+    try {
+      localStorage.removeItem('holdon_completed_onboarding');
+    } catch {}
+    set({
+      hasCompletedOnboarding: false,
+      showOnboardingModal: true,
+    });
   },
 
   history: getStoredHistory(),

@@ -13,6 +13,7 @@ import {
   ArrowDownCircle,
   Flag,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { useWorkoutStore } from '@/stores/workoutStore';
 
@@ -26,6 +27,7 @@ export default function FastDemoBar({ onClose }: FastDemoBarProps) {
     fastTriggerStruggleDrop,
     fastTriggerPain,
     fastFinishAll,
+    restartOnboarding,
   } = useWorkoutStore();
 
   return (
@@ -90,6 +92,16 @@ export default function FastDemoBar({ onClose }: FastDemoBarProps) {
           >
             <Flag className="w-3 h-3 text-sky-600" />
             <span>結算看報表</span>
+          </button>
+
+          {/* Action 6: Onboarding Guide Flow */}
+          <button
+            onClick={restartOnboarding}
+            className="px-2.5 py-1 rounded-full bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 flex items-center gap-1 font-bold transition-colors"
+            title="啟動新手第一次登入完整導引流程"
+          >
+            <Sparkles className="w-3 h-3 text-purple-600" />
+            <span>新手流程 (Onboarding)</span>
           </button>
         </div>
 

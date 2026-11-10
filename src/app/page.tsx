@@ -22,6 +22,7 @@ import AICoachChatView from '@/components/AICoachChatView';
 import PlanSelectionView from '@/components/PlanSelectionView';
 import AppBottomNav from '@/components/AppBottomNav';
 import ShareablePRCardModal from '@/components/ShareablePRCardModal';
+import OnboardingFlowModal from '@/components/OnboardingFlowModal';
 
 export default function Home() {
   const {
@@ -92,6 +93,9 @@ export default function Home() {
 
       {/* Feature 1: Shareable Instagram/Threads PR Brag Card Modal */}
       <ShareablePRCardModal />
+
+      {/* User Onboarding Flow (新手第一次登入完整導引流程) */}
+      <OnboardingFlowModal />
     </main>
   );
 }
